@@ -1,0 +1,204 @@
+//============================================================================
+// Project     	: SimReg Simulated Regression Algorithm for Transcriptome Quantification from RNA-Seq Data
+// Author      	: Adrian Caciula, Department of Computer Science, Georgia State University, Atlanta, GA 30303, USA 
+// Contact		: Adrian Caciula at adrian.caciula@gmail.com   
+// Description 	: Simulate reads from transcripts
+
+// Created     	: 04/19/2014
+// @Copyright 2014, All Rights Reserved.
+
+// Compile command:
+// g++ -std=c++0x sim-reads.cpp ../include/current_time.cpp -o sim-reads 
+//============================================================================
+
+#include "../include/current_time.h"
+
+#include <iostream>     // std::cout
+#include <fstream>      // std::ifstream
+#include <sstream>      // std::istringstream
+#include <string>
+#include <vector>
+#include <algorithm>    // std::reverse, copy
+#include <iterator>     // std::ostream_iterator
+#include <ctime>
+
+#define DEBUG 0
+
+using namespace std;
+
+#define HELPMESSAGE "Too few parameters: \n\
+ \n\
+Input:\n\
+argv[1] - FA File with transcript frequencies. \n\
+argv[2] - Mean Fragment Length \n\
+argv[3] - Read Length \n\
+"
+
+int main(int argc,char *argv[]){
+	
+	cout << endl <<" SimReg Reads Simulator (2014), Version 2 (April 24, 2014)"<<endl; 
+    cout << "==================================================="<<endl<<endl;
+	
+	if(argc<4){
+		cout<<HELPMESSAGE<<endl;
+		exit(1);
+	}
+
+string refSeq=argv[1];
+int meanFl=atoi(argv[2]);
+int readL=atoi(argv[3]);
+
+	cout<<"\n["<<current_time()<<"] Run: "<<argv[0]<<endl;
+	cout<<"\nInput File: "<<argv[1]<<endl;
+	cout<<"Mean Fragment Length: "<<argv[2]<<endl;
+	cout<<"Read Length: "<<argv[3]<<endl;
+	
+	ifstream input_stream; //transcript sequencies
+	input_stream.open(refSeq.c_str());
+	if(!input_stream){
+		cout<<"Unable to open "<<refSeq.c_str()<<endl;
+		exit(1);
+	}
+	
+	string outputReadsP1="simreg-reads-pair1.fa";
+	string outputReadsP2="simreg-reads-pair2.fa";
+	
+	ofstream out_p1;
+	ofstream out_p2;
+	out_p1.open(outputReadsP1.c_str());
+	out_p2.open(outputReadsP2.c_str());
+	
+	//Variable Declaration
+	string line;
+	string field;
+	string currTrName;
+	string currTrSeq;
+	int readName=1; //Read ID -- initialized to 1
+	int avgFragLen=meanFl; //set
+	int fragLen=0; 
+	int avgReadLen=readL; //set
+	int readLen=0;
+	int currTrLen=0;
+	
+	while(input_stream.good()){
+		getline(input_stream,line);
+		if(!line.empty()){
+			//cout<<line<<endl;
+			istringstream iss(line);
+			
+			getline(iss,field);
+			//cout<<"Field: "<<field<<endl;
+			
+			char first_char=field.at(0);
+			
+			if (first_char =='>')
+			{ //transcript name
+				
+				currTrName=field.substr(1);
+
+						#if DEBUG
+							cout<<"Current Transcript Name: "<<currTrName<<endl;
+						#endif
+			}
+			else
+			{	//transcript sequence
+				currTrSeq=field.c_str();
+				currTrLen=currTrSeq.length();
+				
+				if(avgReadLen <= currTrLen && currTrLen < avgFragLen )
+				{
+					fragLen = currTrLen;
+					readLen	= avgReadLen; //no change
+				}
+				else if(avgReadLen > currTrLen)
+				{
+					fragLen=readLen=currTrLen; //change both
+				}
+				else
+				{
+					fragLen = avgFragLen; //no change
+					readLen	= avgReadLen; //no change
+				}	
+					#if DEBUG
+							cout<<"Current Transcript Sequence: "<<currTrSeq<<endl;
+							cout<<"Current Transcript Sequence Length: "<<currTrSeq.length()<<endl;
+							cout<<"Average Fragment Length: "<<avgFragLen<<endl;
+							cout<<"Current Fragment Length: "<<fragLen<<endl;
+							cout<<"Read Length: "<<readLen<<endl;
+							//exit(7);
+					#endif
+				
+							
+				
+				//iterate thourght the sequnce and extract reads			
+				string read_p1;
+				for(char& c : currTrSeq) {
+					//Note: index of c is: &c - &currTrSeq[0]
+					//substr(position, length);
+						//cout<<endl<<"Read: "<<currTrSeq.substr(&c - &currTrSeq[0], 100)<<endl;
+					
+							#if DEBUG
+								cout<<"Sequence Lenght: "<<currTrSeq.length()<<endl;
+								cout<<"Current Position: "<<&c - &currTrSeq[0]<<endl;
+							#endif
+							
+					//if current position is <= than last position - fragment length
+					if(&c - &currTrSeq[0] <= currTrSeq.length()-fragLen)
+					{
+						out_p1<<">"<<readName<<" reference="<<currTrName<<endl;
+						out_p1<<currTrSeq.substr(&c - &currTrSeq[0], readLen)<<endl;
+						
+						//2nd pair of the read p2
+						string readP2=currTrSeq.substr(&c - &currTrSeq[0]+fragLen-readLen, readLen);
+						vector<char> readP2Vec;
+						
+						//complement p2
+						for(char& cr : readP2) {
+							switch(cr){
+                                case 'A':
+                                    readP2Vec.push_back('T');   break;
+                                case 'C':
+                                    readP2Vec.push_back('G');   break;
+                                case 'T':
+                                    readP2Vec.push_back('A');   break;
+                                case 'G':
+                                    readP2Vec.push_back('C');  
+							}
+						}
+						
+						//reverse p2
+						reverse(readP2Vec.begin(),readP2Vec.end());
+						
+								#if DEBUG
+									cout<<"Print complemented and reversed vector P2"<<endl;
+										for(auto &v : readP2Vec)
+											cout<<v;
+										cout<<endl;
+								#endif
+								
+						//Write vector to file
+						out_p2<<">"<<readName<<" reference="<<currTrName<<endl;
+						//ostream_iterator<char> output_it(out_p2);
+						//copy(readP2Vec.begin(), readP2Vec.end(), output_it);
+						for(auto &v : readP2Vec)
+							out_p2<<v;
+						out_p2<<endl;
+						
+						//increment read ID (name)
+						readName++;
+					}
+					//exit(7);
+				}
+				
+			}
+		}
+	}
+
+cout<<"\nTotal number of simulated reads: "<< readName-1 <<" x2 (paired-end reads)"<<endl;
+cout<<"\n["<<current_time()<<"] Done!"<<endl;
+input_stream.close();
+out_p1.close();
+out_p2.close();
+
+return 0;	
+}//end main
