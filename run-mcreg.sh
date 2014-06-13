@@ -154,16 +154,18 @@ fi
 					echo "Input Parameters:"
 					echo "   GTF_File: $GTF_File"
 					echo "   FA_File: $FA_File"
+					echo "   Reference: $REF_File"
 					echo "   Mean fragment length: $mean"
 					echo "   Fragment standard deviation: $deviation"
 					echo "   Read length: $read_length"
 					echo "   Number of reads per fragment: $rpf"
 					echo "   Reads Simulator: $simulator"
+					echo "   Precision Level = $precision"
 
 
 if [ -d "./tmp" ]; then
   # Control will enter here if $DIRECTORY exists.
-  echo -e "\nRemove previous temporary (./tmp) directory\n"
+  echo -e "\nRemoving previous temporary (./tmp) directory . . . \n"
   rm -rf ./tmp/
 fi
 
@@ -231,10 +233,9 @@ if [[ -z "${SAM_File}" ]]; then
 	echo -e "\tFragment Insert Length Min: $fil_min"
 	echo -e "\tFragment Insert Length Max: $fil_max"
 	
-	
-	
+
 	start_time=`date +%s`
-	bowtie --best -v 3 -k 60 -p 36 --chunkmbs 128 $REF_File ${input_option} -1 $obs_pair1_file -2 $obs_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_OBS_60multiAligns.sam
+	bowtie --best -v 3 -k 60 -p 16 --chunkmbs 128 $REF_File ${input_option} -1 $obs_pair1_file -2 $obs_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_OBS_60multiAligns.sam
 	
 	#-v <int> Report alignments with at most <int> mismatches.
 	#bowtie -k 60 -p 12 -v 0 --chunkmbs 128 $REF_File ${input_option} -1 $obs_pair1_file -2 $obs_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_OBS_60multiAligns.sam
@@ -286,8 +287,11 @@ if [[ -z "${CC_Path}" ]]; then
 	start_time=`date +%s`
 	${SCRIPT_DIR}/lib/compute_obsRC_CC $SAM_File
 	end_time=`date +%s`
-	echo Done Computing Connected Components! Execution Time: `expr $end_time - $start_time`s.
+	tsec=`expr $end_time - $start_time`
+	echo "Done Computing Connected Components! Execution Time:" 
+	${SCRIPT_DIR}/utils/seconds.sh $tsec
 	echo ""
+	
 	CC_Path=$PWD
 else
 	#Else if path to connected components is given we'll need to copy the singleTrGenes.txt file
@@ -296,7 +300,7 @@ fi
 
 
 ##############################
-echo -e "\nStep 2 - Run MCReg for each component (that has more than 1 transcript)"
+#echo -e "\nStep 2 - Run MCReg for each component (that has more than 1 transcript)"
 ##############################
 
 #components=`ls $CC_Path`
@@ -309,7 +313,7 @@ echo -e "\nStep 2 - Run MCReg for each component (that has more than 1 transcrip
 #tNComp=`ls $CC_Path | wc -l`
 #echo "Total number of components: $tNComp"
 
-echo "CC_Path=$CC_Path"
+echo "Path to Connected Components: $CC_Path"
 
 #for p in $(seq 1 $procs)
 #do
@@ -322,15 +326,17 @@ echo "CC_Path=$CC_Path"
 	#echo "components: "
 	#echo $components | head
 	
-	echo "GTF_File = $GTF_File"
-	echo "FA_File = $FA_File"
-	echo "read_length = $read_length"
-	echo "rpf = $rpf"
-	echo "REF File = $REF_File"
-	echo "precision = $precision"
-
+		if [ $DEBUG -ne 0 ]; then
+			echo "GTF_File = $GTF_File"
+			echo "FA_File = $FA_File"
+			echo "read_length = $read_length"
+			echo "rpf = $rpf"
+			echo "REF File = $REF_File"
+			echo "precision = $precision"
+		fi
+			
 	#${SCRIPT_DIR}/scripts/simReg.sh -m $mean -d $deviation -l $read_length -r $rpf -G $GTF_File -F $FA_File -s $SCRIPT_DIR -C $CC_Path
-	${SCRIPT_DIR}/simreg -G $GTF_File -F $FA_File -m $mean -d $deviation -t $precision -s $SCRIPT_DIR -C $CC_Path
+	${SCRIPT_DIR}/simreg -G $GTF_File -F $FA_File -m $mean -d $deviation -l $read_length -t $precision -s $SCRIPT_DIR -C $CC_Path
 	#exit 7
 #done
 
@@ -442,6 +448,7 @@ echo "total_sum_reads_portion=$total_sum_reads_portion"
 ${SCRIPT_DIR}/lib/computeTrFreq $GTF_File "results.txt" $total_sum_reads_portion
 
 endTotalTime=`date +%s`
-echo Finished! Total Execution Time: `expr $endTotalTime - $startTotalTime`s.
-
+totalTimeSec=`expr $endTotalTime - $startTotalTime`
+echo "Finished! Total Execution Time:"
+${SCRIPT_DIR}/utils/seconds.sh $totalTimeSec
 

@@ -29,7 +29,7 @@ int getdir (string dir, vector<string> &directory)
     }
 
     while ((dirp = readdir(dp)) != NULL) {
-		//for some reason it also returns the . and .. (which we are not interested ) 
+		//for some reason it also returns the current dir (.) and parrent dir (..) (in which we are not interested ) 
         if ((string(dirp->d_name).compare(".") != 0) && (string(dirp->d_name).compare("..") != 0)){
 			directory.push_back(string(dirp->d_name));
 		}
@@ -71,6 +71,9 @@ cout<<"\nRunning "<<argv[0]<<endl;
 	ValueArg<string> devarg("d","deviation","-d <int> Fragment length standard deviation",true,"homer","string");
 	cmd.add( devarg );
 	
+	ValueArg<string> readarg("l","readLength","-l <int> Read length",true,"homer","string");
+	cmd.add( readarg );
+	
 	ValueArg<string> precisarg("t","tuning","-t <int> Tuning(Precision)",true,"homer","string");
 	cmd.add( precisarg );
 
@@ -92,6 +95,7 @@ cout<<"\nRunning "<<argv[0]<<endl;
 
 	string mean=meanarg.getValue();
 	string dev=devarg.getValue();
+	string readLength=readarg.getValue();
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Do what you intend too...
 
@@ -102,6 +106,8 @@ cout<<"\nRunning "<<argv[0]<<endl;
 				cout<<"CC Path = "<<CC_PATH<<endl;
 				cout<<"SCRIPT_DIR = "<<SCRIPT_DIR<<endl;
 				cout<<"precision = "<<tuning<<endl;
+				cout<<"Mean Fragment Length = "<<mean<<endl;
+				cout<<"Read Length = "<<readLength<<endl;
 				//exit(7);
 			#endif
 	
@@ -121,7 +127,7 @@ cout<<"\nRunning "<<argv[0]<<endl;
 		#endif
     
 
-	#pragma omp parallel for num_threads(30) schedule(dynamic)
+	#pragma omp parallel for num_threads(24) schedule(dynamic)
 	for(int i=0; i<directory.size(); i++)
 	{
 	
@@ -150,9 +156,9 @@ cout<<"\nRunning "<<argv[0]<<endl;
 		stringstream bash_command;
 		
 		if(grinder)
-			bash_command<<"nice "<<SCRIPT_DIR<<"/scripts/simReg_cc.sh -g -m "<<mean<<" -d "<<dev<<" -l 100 -r 2 -G "<<gtf<<" -F "<<fa<<" -s "<<SCRIPT_DIR<<" -C "<<CC_PATH<<" -c "<<directory[i];
+			bash_command<<"nice "<<SCRIPT_DIR<<"/scripts/simReg_cc.sh -g -m "<<mean<<" -d "<<dev<<" -l "<<readLength<<" -r 2 -G "<<gtf<<" -F "<<fa<<" -s "<<SCRIPT_DIR<<" -C "<<CC_PATH<<" -c "<<directory[i];
 		else
-			bash_command<<"nice "<<SCRIPT_DIR<<"/scripts/simReg_cc.sh -m "<<mean<<" -d "<<dev<<" -t "<<tuning<<" -l 100 -r 2 -G "<<gtf<<" -F "<<fa<<" -s "<<SCRIPT_DIR<<" -C "<<CC_PATH<<" -c "<<0;//directory[i];
+			bash_command<<"nice "<<SCRIPT_DIR<<"/scripts/simReg_cc.sh -m "<<mean<<" -d "<<dev<<" -t "<<tuning<<" -l "<<readLength<<" -r 2 -G "<<gtf<<" -F "<<fa<<" -s "<<SCRIPT_DIR<<" -C "<<CC_PATH<<" -c "<<0; //directory[i];
 		
 			#if DEBUG
 				cout<<"bash_command = "<<bash_command.str().c_str()<<endl;

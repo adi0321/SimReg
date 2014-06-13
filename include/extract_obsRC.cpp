@@ -25,18 +25,20 @@ void extract_obsRC(string &rBowtie_file, map<vector<string>, int> &ReadsClasses)
 {
 	//This version uses vector<string> in the map for ReadsClasses instead of map<string,bool>
 	
-	cout<<"\n\textract_read_classes: "<<endl;
-	cout<<"\t\tParameters: "<<endl;
-	cout<<"\t\t\t1. Bowtie file: "<<rBowtie_file<<endl;
-	cout<<"\t\t\t2. Reads Classes map "<<endl;
-	
+	//cout<<"\n\textract_read_classes: "<<endl;
+	//cout<<"\t\tParameters: "<<endl;
+	//cout<<"\t\t\t	Bowtie file: "<<rBowtie_file<<endl;
+	cout<<rBowtie_file<<endl;
+	//cout<<"\t\t\t2. Reads Classes map "<<endl;
+	cout<<"Please wait, this may take few minutes"<<endl;
+	cout<<"Processing . . ."<<endl;
 	/****************************************************
 	*					Error Log file					*
 	*****************************************************/
 	//Write unused reads to file
-	string unused_reads_log_file=rBowtie_file.substr(0,rBowtie_file.find_last_of("/"))+"/unused_reads.txt";
+	string unused_reads_log_file="unusedObsReads.txt";
 
-	cout<<"\nWrite unused reads to: \t"<<unused_reads_log_file<<endl;
+	//cout<<"\nWrite unused reads to: \t"<<unused_reads_log_file<<endl;
 
 	ofstream unused_reads;
 	unused_reads.open(unused_reads_log_file.c_str());
@@ -99,7 +101,7 @@ void extract_obsRC(string &rBowtie_file, map<vector<string>, int> &ReadsClasses)
 						cout<<"Line = "<<line<<endl;
 					#endif
 					
-				unused_reads<<line<<endl;
+				//unused_reads<<line<<endl;
 				continue;//skip to the next line
 			}
 			

@@ -80,7 +80,7 @@ void print(const map<string, map< map<string, bool> , int> > &myMap);
 
 int main(int argc,char *argv[]){
 
-cout<<"\nRunning "<<argv[0]<<endl;
+//cout<<"\nRunning "<<argv[0]<<endl;
 
 	if(argc<2){
 		cout<<HELPMESSAGE<<endl;
@@ -104,7 +104,7 @@ cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //Extract OBS reads classes from Bowtie output
 map<vector<string>, int> obsReadsClasses; 
 
-cout<<"\nMain: Parsing Bowtie file ..."<<endl;
+cout<<"\nMain: Parsing Bowtie file: "<<endl;
 
 extract_obsRC(obsRBowtie_file, obsReadsClasses);
 
@@ -135,10 +135,10 @@ cout<<"Total number of Observed Reads classes is: "<<obsReadsClasses.size()<<end
 
 
 	
-cout<<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
-cout<<"["<<current_time()<<"] ~~~~~ Done! ~~~~~"<<endl;
-cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl<<endl;	
-	
+//cout<<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+//cout<<"["<<current_time()<<"] ~~~~~ Done! ~~~~~"<<endl;
+//cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl<<endl;	
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -174,9 +174,9 @@ map< string, map< vector<string>, double> > p_value_new2; //this is d_value
 				#endif
 
 
-cout<<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
-cout<<"["<<current_time()<<"] ~~~~~ Done: adjacency matrix has been computed"<<endl;
-cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl<<endl;				
+//cout<<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+//cout<<"["<<current_time()<<"] ~~~~~ Done: adjacency matrix has been computed"<<endl;
+//cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl<<endl;				
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/		
 
@@ -257,20 +257,20 @@ cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 	
 	
-cout<<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
-cout<<"["<<current_time()<<"] ~~~~~ Done: Connected Components had been computed"<<endl;
-cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl<<endl;
+//cout<<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+//cout<<"["<<current_time()<<"] ~~~~~ Done: Connected Components had been computed"<<endl;
+//cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl<<endl;
 	
-		
 		
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //~~~~~ Write Values to Files ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cout<<endl<<"~~~~~~~~~~~~~~~~~~~~~~"<<endl;
-cout<<"Write Values to Files"<<endl;
+cout<<"Prepare Values for SimReg"<<endl;
 cout<<"~~~~~~~~~~~~~~~~~~~~~~"<<endl;
-
+cout<<"Please wait, this may take few minutes"<<endl;
+	cout<<"writing to files . . ."<<endl;
 /*********************************
 *********************************/
 /*
@@ -346,7 +346,7 @@ read_classes_stream.close();
 		#endif
 	
 //Now print to file
-cout<<"\nWrite observed transcripts names\n\t"<<endl;
+//cout<<"\nWrite observed transcripts names\n\t"<<endl;
 
 ofstream d_stream_new2;
 ofstream resultStream;
@@ -437,6 +437,7 @@ d_stream_new2.open(d_file_new2.c_str());
 	//Matrix for size of read class
 	vector<vector<double>> rcSize;
 	//initialize matrix rcSize with zero
+	
 	for(int i=0;i<rcCounts[cmp.first].size();i++)
     {
 		vector<double> row; // Create an empty row

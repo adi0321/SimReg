@@ -10,7 +10,7 @@ readonly DEBUG=0
 			done
 		fi
 
-echo -e "\nRunning: $0 ... "
+#echo -e "\nRunning: $0 ... "
 
 usage() { echo "
 Usage: 
@@ -99,14 +99,14 @@ if [[ -z "${precision}" ]];then
 fi
 
 	if [ $DEBUG -ne 0 ]; then
-	echo "GTF_File = $GTF_File"
-	echo "FA_File = $FA_File"
-	echo "read_length = $read_length"
-	echo "rpf = $rpf"
-	echo "CC_Path = $CC_Path"
-	echo "simulator=$simulator"
-	echo "precision = $precision"
-	#exit 7
+		echo "GTF_File = $GTF_File"
+		echo "FA_File = $FA_File"
+		echo "read_length = $read_length"
+		echo "rpf = $rpf"
+		echo "CC_Path = $CC_Path"
+		echo "simulator=$simulator"
+		echo "precision = $precision"
+		#exit 7
 	fi
 	
 errs=0
@@ -131,8 +131,8 @@ done
 #components=`ls -d ${CC_Path}*`
 
 #cID stands for component id (remember that this iterates only through components with more than 1 transcript)
-echo "Component ID passed to simReg_cc.sh"
-echo "$cID"
+#echo "Component ID passed to simReg_cc.sh"
+#echo "$cID"
 
 
 #for c in $components
@@ -143,8 +143,8 @@ echo "$cID"
 	#Extract directory name from its path
 	#cID=`basename $c`
 	
-	echo "cID = $cID"
-	echo "CC_Path = $CC_Path"
+	#echo "cID = $cID"
+	#echo "CC_Path = $CC_Path"
 	
 	if [ -d "./$cID" ]; then
 		# Control will enter here if $DIRECTORY exists.
@@ -173,8 +173,8 @@ echo "$cID"
 		fi
 	
 	
-	echo "Create the gtf and fa file for each transcript in current component"
-	start_time=`date +%s`
+	#echo "Create the gtf and fa file for each transcript in current component"
+	#start_time=`date +%s`
 	for tran in $tr_names
 	do
 		#echo "Transcript name: $tran"
@@ -182,8 +182,8 @@ echo "$cID"
 		grep $tran $GTF_File >> ${cID}.gtf
 		grep -A 1 $tran $FA_File >> ${cID}.fa
 	done
-	end_time=`date +%s`
-	echo Done: `expr $end_time - $start_time` s.
+	#end_time=`date +%s`
+	#echo Done: `expr $end_time - $start_time` s.
 	
 	#Check to make sure that both gtf and fa have the same number of transcripts
 	#number of transcripts in the fa file
@@ -192,15 +192,15 @@ echo "$cID"
 	
 	#Get total number of transcripts from the gtf
 	tnt=`${SCRIPT_DIR}/utils/get_isoforms.sh ${cID}.gtf | wc -l`
-	echo "tnt=$tnt"
+	#echo "tnt=$tnt"
 	
 		if [[ $tnt -gt 50 ]]; then
-			echo "Total Number of transcripts is $tnt --> exit this component"
+			echo "Total Number of transcripts is $tnt --> exit component $cID" >> ../../largeComponents.txt
 			exit 7
 		fi
 	
 	
-	echo -e "\nPreparing simulation.properties file for IsoEM simulator ..."
+	#echo -e "\nPreparing simulation.properties file for IsoEM simulator ..."
 	start_time=`date +%s`
 	
 	
@@ -240,19 +240,23 @@ echo "$cID"
 			fi
 	done
 		
-		echo -e "\nCompute number of Monte Carlo reads: " 
+		#echo -e "\nCompute number of Monte Carlo reads: " 
 		#get total_exon_length:
 		total_exon_length=`awk '{s+=($5-$4)+1} END {print s}' ${cID}.gtf` 
 
-		echo "total_exon_length=$total_exon_length"
+		#echo "total_exon_length=$total_exon_length"
 		
-		#Calculate number of reads for coverage 1000
-		#ofreads =(coverage x total_exon_length) / (reads_per_fragment * read_length)     (paired-end) 
-		#ofreads=(1000 x $total_exon_length) / 200 	#200 because they are paired-end reads
+		
+		
+		if [[ $simulator == "generate-reads" ]]; then
+	
+			#Calculate number of reads for coverage 1000
+			#ofreads =(coverage x total_exon_length) / (reads_per_fragment * read_length)     (paired-end) 
+			#ofreads=(1000 x $total_exon_length) / 200 	#200 because they are paired-end reads
 
-		mcreads=`echo "(1000 * $total_exon_length) / ($rpf * $read_length)" | bc`
-		#just to be consistent with Grinder --- we'll divide by $read_length only ???
-		#mcreads=`echo "(1000 * $total_exon_length) / $read_length" | bc`
+			mcreads=`echo "(1000 * $total_exon_length) / ($rpf * $read_length)" | bc`
+			#just to be consistent with Grinder --- we'll divide by $read_length only ???
+			#mcreads=`echo "(1000 * $total_exon_length) / $read_length" | bc`
 	
 				if [ $DEBUG -ne 0 ]; then
 					echo "Number of transcripts in each gene: $nt_gene"
@@ -265,12 +269,10 @@ echo "$cID"
 					echo "simulator = $simulator"
 					#exit 7
 				fi
-		
-		if [[ $simulator == "generate-reads" ]]; then
 	
-				if [ -s $PWD/simulation.properties ];then
-					rm -rf $PWD/simulation.properties
-				fi
+			if [ -s $PWD/simulation.properties ];then
+				rm -rf $PWD/simulation.properties
+			fi
 	
 			#Step 7: Create simulation.properties				
 			echo "gtfFile=${cID}.gtf">>$PWD/simulation.properties
@@ -333,9 +335,10 @@ echo "$cID"
 			refFile="grinder-reads.fa"
 		else
 			#else use SimReg Simulator
-			echo -e "\nGenerating Monte Carlo Reads using SimReg simulator..."
-			${SCRIPT_DIR}/utils/sim-reads $PWD/${cID}.fa $mean $read_length
-
+			#echo -e "\nGenerating Monte Carlo Reads using SimReg Reads Simulator..."
+			${SCRIPT_DIR}/utils/sim-reads $PWD/${cID}.fa $mean $read_length > sim-reads.log
+			wait
+			
 			mc_pair1_file=$PWD/simreg-reads-pair1.fa
 			mc_pair2_file=$PWD/simreg-reads-pair2.fa
 			
@@ -351,10 +354,14 @@ echo "$cID"
 	
 			
 		#Step 10: Make bowtie index
-		echo -e "\nBuilding Bowtie indexes for ${cID}.fa ...\n"
+		#echo -e "\nBuilding Bowtie indexes for ${cID}.fa ...\n"
 			
 				if [ $DEBUG -ne 0 ]; then
 					echo "Reference fasta file: ${cID}.fa"
+					echo -e "\tInput Option is: $input_option"
+					echo -e "\tFragment Insert Length Min: $fil_min"
+					echo -e "\tFragment Insert Length Max: $fil_max"
+
 					echo "in $PWD"
 				fi
 		
@@ -362,27 +369,23 @@ echo "$cID"
 		bowtie-build ${cID}.fa $cID > /dev/null 2>&1
 		wait
 		end_time=`date +%s`
-		echo Done: execution time was `expr $end_time - $start_time` s.
+		#echo Done: execution time was `expr $end_time - $start_time` s.
 		
-		echo -e "\nMapping Monte Carlo reads using Bowtie ...\n"
+		#echo -e "\nMapping Monte Carlo reads using Bowtie ...\n"
 		#Fragment insert length range
 		fil_min=$(($mean-(4*$deviation)))
 		fil_max=$(($mean+(4*$deviation)))
 		
-		
-			echo -e "\tInput Option is: $input_option"
-			echo -e "\tFragment Insert Length Min: $fil_min"
-			echo -e "\tFragment Insert Length Max: $fil_max"
-
 		start_time=`date +%s`
 		#bowtie -v 0 -k 30 -p 12 $cID $input_option -1 $mc_pair1_file -2 $mc_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_MC_60multiAligns.sam
-		bowtie -v 0 -a -p 12 $cID $input_option -1 $mc_pair1_file -2 $mc_pair2_file -I 1 -X 1000 -S $PWD/bowtie_MC_60multiAligns.sam
+		bowtie -v 0 -k 60 -p 4 --chunkmbs 128 $cID $input_option -1 $mc_pair1_file -2 $mc_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_MC_60multiAligns.sam > bowtieSimReg.log
+		wait
 		mcSAM_File=$PWD/bowtie_MC_60multiAligns.sam
 		
-		wait
-		end_time=`date +%s`
-		echo Done Mapping Monte Carlo Reads! Execution time: `expr $end_time - $start_time` s.
-		echo ""
+
+		#end_time=`date +%s`
+		#echo Done Mapping Monte Carlo Reads! Execution time: `expr $end_time - $start_time` s.
+		#echo ""
 		
 		
 #if the number of transcripts is 2 then we need to divide by the ratio
@@ -412,20 +415,20 @@ if [[ $tnt -eq 0 ]]; then
 else
 		#Else run the solver
 		
-		echo "Computing Simulated Read Classes and D Values(compute_sRC_d)"
+		#echo "Computing Simulated Read Classes and D Values(compute_sRC_d)"
 		
 		start_time=`date +%s`
-		${SCRIPT_DIR}/lib/compute_sRC_d ${cID}.gtf $refFile $PWD/bowtie_MC_60multiAligns.sam ${CC_Path}/obsRCcounts.txt
+		${SCRIPT_DIR}/lib/compute_sRC_d ${cID}.gtf $refFile $PWD/bowtie_MC_60multiAligns.sam ${CC_Path}/obsRCcounts.txt >> sim-reads.log
 		wait
-	#exit 7
+
 		end_time=`date +%s`
-		echo Done Computing Simulated Read Classes and D values! Execution Time: `expr $end_time - $start_time` s.
-		echo ""
+		#echo Done Computing Simulated Read Classes and D values! Execution Time: `expr $end_time - $start_time` s.
+		#echo ""
 
 		
 		#To DO (2014.02.13 - Add also observed classes - right now they are discarded - 
 			##but since the results are good we don't worry too much about this)
-		echo "Prepare file for solver"
+		#echo "Prepare file for solver"
 		
 				#May 1, 2014
 				#File obsRCsize.txt must be recalculated 
@@ -433,36 +436,32 @@ else
 				#Based on the new size
 				#(This will be done in MCReg_CC_v2)
 		
-		start_time=`date +%s`
-		${SCRIPT_DIR}/lib/MCReg_CC_v2 ${cID}_d_values.txt ${cID}_read_classes2.txt ${CC_Path}/obsRCcounts.txt 1 1 
-		#>& mcreg_cc.log.txt
+		#start_time=`date +%s`
+		${SCRIPT_DIR}/lib/MCReg_CC_v2 ${cID}_d_values.txt ${cID}_read_classes2.txt ${CC_Path}/obsRCcounts.txt 1 1 > mcreg_cc.log
 		wait
-		end_time=`date +%s`
-		echo Done MCReg_CC_v2 execution time: `expr $end_time - $start_time` s.
-		echo ""
+		#end_time=`date +%s`
+		#echo Done MCReg_CC_v2 execution time: `expr $end_time - $start_time` s.
+		#echo ""
 		
 		#exit 7
 		
 		#Step 12: Run qp solver and compute the transcripts frequency
 		#Total number of mapped observed reads
 		total_obs_reads=`awk '{ total+=$NF} END{print total}' ${CC_Path}/obsRCcounts.txt`
-
-		echo "total_obs_reads = $total_obs_reads"
-
 		d_values_file=`ls d_value*`
-		echo "d_values_file is: $d_values_file"
-		
 		estimFile=$PWD/mcreg.iso.estimates
-		echo "Estimates File = $estimFile"
-
-
 		
-		
-		start_time=`date +%s`
-		${SCRIPT_DIR}/scripts/MCReg.sh $PWD/${cID}.gtf $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads $estimFile ${CC_Path}/obsRCsize.txt
-		end_time=`date +%s`
+			if [ $DEBUG -ne 0 ]; then
+				echo "total_obs_reads = $total_obs_reads"
+				echo "d_values_file is: $d_values_file"
+				echo "Estimates File = $estimFile"
+			fi
+
+		#start_time=`date +%s`
+		${SCRIPT_DIR}/scripts/MCReg.sh $PWD/${cID}.gtf $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads $estimFile ${CC_Path}/obsRCsize.txt > MCReg.sh.log
+		#end_time=`date +%s`
 		#User regular observed file (the one that will be created in temp) ?
-		echo Done MCReg.sh in `expr $end_time - $start_time` s.
+		#echo Done MCReg.sh in `expr $end_time - $start_time` s.
 
 fi
 		##Compute the correlation for transcripts
@@ -850,10 +849,10 @@ fi
 		echo "Done component ${cID}"
 		cd ..
 		
-		if [[ ${cID} == "37" ]]; then
-			echo "cID = $cID"
-			exit 7
-		fi
+		#if [[ ${cID} == "37" ]]; then
+		#	echo "cID = $cID"
+		#	exit 7
+		#fi
 		
 #done
 
