@@ -1,1 +1,10 @@
 SimReg
+---------------------
+SimReg : A novel Simulated Regression based algorithm for transcriptome quantification.
+To solve the problem of transcript and gene expression level estimation from RNA-Seq
+data, we proposed SimReg, a Monte-Carlo simulated regression based method, that uses
+a more accurate simulation of read emission. 
+
+To compile SimReg, simply run
+   
+    make
