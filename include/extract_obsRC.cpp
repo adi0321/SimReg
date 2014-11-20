@@ -36,7 +36,7 @@ void extract_obsRC(string &rBowtie_file, map<vector<string>, int> &ReadsClasses)
 	*					Error Log file					*
 	*****************************************************/
 	//Write unused reads to file
-	string unused_reads_log_file="unusedObsReads.txt";
+	string unused_reads_log_file="../unusedObsReads.txt";
 
 	//cout<<"\nWrite unused reads to: \t"<<unused_reads_log_file<<endl;
 
@@ -83,6 +83,10 @@ void extract_obsRC(string &rBowtie_file, map<vector<string>, int> &ReadsClasses)
 			
 			getline(iss,field,'\t');
 				read_name=field.c_str();
+				//string readPrefix=read_name.substr(0, read_name.find("."));
+				//cout<<"readPrefix = "<<readPrefix<<endl;
+				size_t startPos=read_name.find('.');
+				read_name=read_name.substr(startPos+1, read_name.length()-startPos);
 			
 			getline(iss,field,'\t');
 			getline(iss,field,'\t');
@@ -105,7 +109,7 @@ void extract_obsRC(string &rBowtie_file, map<vector<string>, int> &ReadsClasses)
 				continue;//skip to the next line
 			}
 			
-			//first read
+			//the very first read of the file
 			if(first_read){
 						#if DEBUG
 							cout<<"\t1.The Very First Read: ";

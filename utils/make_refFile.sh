@@ -22,7 +22,8 @@ then
 	mRna=/data/malta/hg18/myKnownGeneMrna.txt
 elif [ "$hostname" == "rna1" -o "$hostname" == "cnv1" ]
 then
-	mRna=/import1/UCSC/hg18/myKnownGeneMrna.txt
+	mRna=/import1/GENCODE_v19/new/gencode.v19.pc_transcripts.new.fa
+	#mRna=/import1/UCSC/hg18/myKnownGeneMrna.txt
 	#mRna=/import1/UCSC/hg19/hg19KnownGeneMrna.txt
 else
 	echo -e "\ntError: in $0: Unknown host!"
@@ -57,6 +58,10 @@ echo -e "\n\t Extract fa sequences from $mRna \n\t   to $ref_file ... "
 
 for transcr in $tr_names
 do
+	#echo "Tr=$transcr"
+	transcr="${transcr%.*}"
+	#echo "Tr=$transcr"
+	
 	if [ "$(grep $transcr $mRna)" ]
 	then
 		#The return value is as in C: return 1 if true and 0 if false.	
@@ -64,7 +69,7 @@ do
 		grep -w -A1 $transcr $mRna >> $ref_file
 	else
 		echo "Error: Sequence for transcript $transcr was not found in $mRna"
-		exit 0
+		#exit 0
 	fi
 done
 

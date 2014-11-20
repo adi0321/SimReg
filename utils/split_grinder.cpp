@@ -255,11 +255,14 @@ out_m2<<"\n";
 cout<<"Files had been created"<<endl;
 cout<<"\t"<<m1_file<<endl;
 cout<<"\t"<<m2_file<<endl<<endl;
+
+#if DEBUG
 cout<<"Read Count Summary:"<<endl;
 for(const auto &t : reads_count)
 	cout<<t.first<<": "<<t.second<<endl;
+#endif
 	
-cout<<endl<<"Done!"<<endl<<endl;
+cout<<endl<<"Done Spliding Grinder FA file!"<<endl<<endl;
 
 //cout<<"NOTE: Check to see if both files have the same number of reads!"<<endl<<endl;
 //This issue had been solved.

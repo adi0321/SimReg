@@ -146,7 +146,7 @@ cout<<"Total number of Monte Carlo Reads classes is: "<<mcReadsClasses.size()<<e
 
 	#if DEBUG
 		cout<<"\nMONTE CARLO Reads Classes \t Size:"<<endl;
-			//print(mcReadsClasses);
+			print(mcReadsClasses);
 			cout<<endl;
 			
 		cout<<"MC Reads Classes References"<<endl;

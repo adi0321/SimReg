@@ -34,6 +34,8 @@ argv[2] - Mean Fragment Length \n\
 argv[3] - Read Length \n\
 "
 
+void simulateReads(string &currTrSeq, string &currTrName, int avgFragLen, int avgReadLen, ofstream &out_p1, ofstream &out_p2, int &readName);
+
 int main(int argc,char *argv[]){
 	
 	cout << endl <<" SimReg Reads Simulator (2014), Version 2 (April 24, 2014)"<<endl; 
@@ -72,13 +74,14 @@ int readL=atoi(argv[3]);
 	string line;
 	string field;
 	string currTrName;
+	string nextTrName;
 	string currTrSeq;
 	int readName=1; //Read ID -- initialized to 1
 	int avgFragLen=meanFl; //set
-	int fragLen=0; 
 	int avgReadLen=readL; //set
-	int readLen=0;
-	int currTrLen=0;
+	
+	bool firstranscript=true;
+	//solve the first and the last transcript
 	
 	while(input_stream.good()){
 		getline(input_stream,line);
@@ -91,20 +94,55 @@ int readL=atoi(argv[3]);
 			
 			char first_char=field.at(0);
 			
+			//read sequences until get to the next transcript
 			if (first_char =='>')
 			{ //transcript name
 				
-				currTrName=field.substr(1);
+				nextTrName=field.substr(1);
+				
 
 						#if DEBUG
 							cout<<"Current Transcript Name: "<<currTrName<<endl;
 						#endif
+						
+				if(firstranscript){
+					currTrName=nextTrName;
+					firstranscript=false;
+					continue;
+				}
+				//else this is the 2nd or other transcript
+				//compute and simulate reads for the previous transcript
+				
+				simulateReads(currTrSeq, currTrName, avgFragLen, avgReadLen, out_p1, out_p2, readName);
+				
 			}
 			else
-			{	//transcript sequence
-				currTrSeq=field.c_str();
-				currTrLen=currTrSeq.length();
-				
+			{	//get the transcript sequence
+				currTrSeq+=field.c_str();
+				currTrName=nextTrName;
+			}	
+		}
+		else{ 
+			//if line is empty --> simulate reads for the last transcript
+			simulateReads(currTrSeq, currTrName, avgFragLen, avgReadLen, out_p1, out_p2, readName);
+		}
+	}
+
+cout<<"\nTotal number of simulated reads: "<< readName-1 <<" x2 (paired-end reads)"<<endl;
+cout<<"\n["<<current_time()<<"] Done!"<<endl;
+input_stream.close();
+out_p1.close();
+out_p2.close();
+
+return 0;	
+}//end main
+
+void simulateReads(string &currTrSeq, string &currTrName, int avgFragLen, int avgReadLen, ofstream &out_p1, ofstream &out_p2, int &readName){
+
+	int currTrLen=currTrSeq.length();
+	int fragLen=0; 
+	int readLen=0;
+
 				if(avgReadLen <= currTrLen && currTrLen < avgFragLen )
 				{
 					fragLen = currTrLen;
@@ -126,9 +164,7 @@ int readL=atoi(argv[3]);
 							cout<<"Current Fragment Length: "<<fragLen<<endl;
 							cout<<"Read Length: "<<readLen<<endl;
 							//exit(7);
-					#endif
-				
-							
+					#endif				
 				
 				//iterate thourght the sequnce and extract reads			
 				string read_p1;
@@ -145,7 +181,7 @@ int readL=atoi(argv[3]);
 					//if current position is <= than last position - fragment length
 					if(&c - &currTrSeq[0] <= currTrSeq.length()-fragLen)
 					{
-						out_p1<<">"<<readName<<" reference="<<currTrName<<endl;
+						out_p1<<">"<<readName<<"."<<readName<<" reference="<<currTrName<<endl; //readName was written twice just for being consistent with MAQC read names (which contains dots)
 						out_p1<<currTrSeq.substr(&c - &currTrSeq[0], readLen)<<endl;
 						
 						//2nd pair of the read p2
@@ -177,7 +213,7 @@ int readL=atoi(argv[3]);
 								#endif
 								
 						//Write vector to file
-						out_p2<<">"<<readName<<" reference="<<currTrName<<endl;
+						out_p2<<">"<<readName<<"."<<readName<<" reference="<<currTrName<<endl; //readName was written twice just for being consistent with MAQC read names (which contains dots)
 						//ostream_iterator<char> output_it(out_p2);
 						//copy(readP2Vec.begin(), readP2Vec.end(), output_it);
 						for(auto &v : readP2Vec)
@@ -190,15 +226,5 @@ int readL=atoi(argv[3]);
 					//exit(7);
 				}
 				
-			}
-		}
-	}
-
-cout<<"\nTotal number of simulated reads: "<< readName-1 <<" x2 (paired-end reads)"<<endl;
-cout<<"\n["<<current_time()<<"] Done!"<<endl;
-input_stream.close();
-out_p1.close();
-out_p2.close();
-
-return 0;	
-}//end main
+				currTrSeq=""; //clear the transcript sequence
+}

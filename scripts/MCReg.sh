@@ -39,6 +39,9 @@ echo "3. obsVFile = $obsVFile"
 echo "4. total_no_reads= $total_no_reads"
 echo "5. out_file = $out_file"
 
+
+
+
 rm -rf ./tr_length.txt
 rm -rf ./temp/
 
@@ -46,6 +49,8 @@ mkdir temp
 
 #Compute transcripts lengths:
 awk '($3=="exon") || ($2=="exon")  {ID=$12;L[ID]+=$5-$4+1} END{for(i in L){print i, L[i]}}' $gtf | sort | awk '{print $1, $2}' > tr_length.txt
+
+
 
 if [ -s "$d_values" ]
 then
@@ -77,6 +82,7 @@ awk '{if($1=="Component:"){
 		for (i = 3; i <= nr_tr+2; i++){
 			printf("%.10f ",$i)>>"./temp/"prefix"_d_values.txt";
 		}
+		
 		printf("%f\n",$1)>>"./temp/"prefix"_o_values.txt";
 		printf("\n")>>"./temp/"prefix"_d_values.txt";
 	}
@@ -312,10 +318,14 @@ do
 	do
 	
 		#New Formula (11/7/2013)
-		frequency=$(echo "${solver_estimates[$i]} * ( ${no_reads_c} / $local_avg_tr_len ) / $total_sum_reads_portion" | bc -l)
-		
+		if [[ $total_sum_reads_portion != 0 ]]; then
+			frequency=$(echo "${solver_estimates[$i]} * ( ${no_reads_c} / $local_avg_tr_len ) / $total_sum_reads_portion" | bc -l)
+		else
+			frequency=0
+		fi
 			if [ $DEBUG -ne 0 ]; then
-				echo "t=$t and i=$i"
+				echo "Where:"
+				echo -e "\tTranscript t=$t and index i=$i"
 				echo -e "\tsolver_estimates[$i] = ${solver_estimates[$i]}"
 				echo -e "\tno_reads_c = ${no_reads_c}"
 				echo -e "\t* local_avg_tr_len = $local_avg_tr_len"
@@ -345,5 +355,5 @@ do
 done
 
 
-echo -e "\nDone!\n"
+echo -e "\nMCReg.sh Done!\n"
 

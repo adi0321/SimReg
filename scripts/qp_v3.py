@@ -22,6 +22,17 @@ import numpy as np
 # cvxpy
 import cvxpy
 
+import logging
+log = logging.getLogger('qp')
+log.setLevel(logging.NOTSET)
+#log.setLevel(logging.ERROR)
+#log.setLevel(logging.DEBUG)
+#DEBUG print all logs
+formatter = logging.Formatter('[%(levelname)s] %(message)s')
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+log.addHandler(handler)
+
 ### definitions ###
 
 ### classes ###
@@ -30,7 +41,7 @@ import cvxpy
 
 def _cqp(D, o, k, m, N):
     ''' solves using cvxpy '''
-      
+    
     # cast to object.
     D = cvxpy.matrix(D)
     N = cvxpy.matrix(N)	
@@ -49,7 +60,7 @@ def _cqp(D, o, k, m, N):
     #sum1 = cvxpy.equals(cvxpy.sum(f), sum_obs_freq)
     
     #3	
-    dev = cvxpy.equals(D*f-o-x,0.0)	
+    #dev = cvxpy.equals(D*f-o-x,0.0)	
     
 	#4. matrix N (m x m) * x - y = 0
     sizeConstr = cvxpy.equals(N*x-y,0.0)
@@ -58,15 +69,17 @@ def _cqp(D, o, k, m, N):
     #This might not work but try
     #sizeConstr = cvxpy.equals(x/N-y,0.0)
 	
-    constrs = [geqs, sum1, dev, sizeConstr]
+    #constrs = [geqs, sum1, dev, sizeConstr]
+    constrs = [geqs, sum1]
 		
-    #print '\tin _cqp function: \n\t\tPrint matrices shapes:'
-    #print '\t\t\t', D.shape
-    #print '\t\t\t', f.shape
-    #print '\t\t\t', o.shape
+    log.debug('\tin _cqp function: \n\t\tPrint matrices shapes:')
+    log.debug('\t\t\t%s', D.shape)
+    log.debug('\t\t\t%s', f.shape)
+    log.debug('\t\t\t%s', o.shape)
     
     # create the program.
-    p = cvxpy.program(cvxpy.minimize(cvxpy.norm2(y)),constraints=constrs)
+    #p = cvxpy.program(cvxpy.minimize(cvxpy.norm2(y)),constraints=constrs)
+    p = cvxpy.program(cvxpy.minimize(cvxpy.norm2(D*f-o)),constraints=constrs)
     p.options['abstol'] = 1e-6 ## 'abstol' - Absolute accuracy	Default: 1e-7
     p.options['reltol'] = 1e-5 ## 'reltol' - Relative accuracy	Default: 1e-6
     p.options['feastol'] = 1e-5 ## 'feastol' - Tolerance for feasibility conditions	Default: 1e-6
@@ -116,31 +129,27 @@ rcSize_file=sys.argv[6]
 
 # get transcripts length
 tr_length = np.loadtxt(tr_lengths_file) #load matrix from file into array
-print 'Print transcripts length:'
-print tr_length
+
+log.debug('Print transcripts length: %s', tr_length)
  
 # get size of each read class
 N = np.loadtxt(rcSize_file) #load matrix from file into array
-print 'Print Read Classes Size:'
-print N
+log.debug('Print Read Classes Size: \n%s', N)
 
-
-print '\nLoad matrix D from file into array'
+log.info('Load matrix D from file into array')
 # D matrix
 D = np.loadtxt(d_values) #load matrix from file into array
-print D
+log.debug('Matrix D: \n%s', D)
  
 # observed frequencies
 o = np.zeros((m,1), dtype=np.float)
 temp_o = np.loadtxt(o_values)
-#print "temp_o",temp_o
+log.debug('temp_o: \n%s',temp_o)
 
-#print 'Print size of o_values file:'
-#print len(np.atleast_1d(temp_o))
+log.debug('Print size of o_values file: \n%s', len(np.atleast_1d(temp_o)))
 #o_values may be just one row
 
-#print "Length of D"
-#print len(np.atleast_1d(D))
+log.debug('Length of D: \n%s', len(np.atleast_1d(D)))
 
 #This assumption was wrong because we can have only one o value but 2 transcripts
 if (len(np.atleast_1d(temp_o)) == 1) and (len(np.atleast_1d(D)) == 1):
@@ -157,19 +166,15 @@ else:
 	for i in range(len(np.atleast_1d(temp_o))):
 		o[i,0] = temp_o[i]
 
-	
-#print 'Print observed read frequencies'
-#print o
+log.debug('Print observed read frequencies: \n%s', o)
 
 #print '\nEstimate transcript frequencies:'
 # estimate transcript frequencies
 f = _cqp(D, o, k, m, N)
-
-print "Print f':"
+ 
 f=np.around(f, decimals=8)
-print f
-print "-"
 #print np.around(f, decimals=6)
+log.debug("Print f': \n%s\n-",f)
 
 ####~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #### Print original f values (f') to file (before the values are divided by transcript length)
@@ -199,9 +204,9 @@ getcontext().prec = 20
 for i in range(len(f)):
     #print np.around(f[i]/tr_length[i], decimals=20)
     temp_fi=str(f[i]).strip('[]')
-    print temp_fi
-    print tr_length[i]	
-    print len(f)
+    #print temp_fi
+    #print tr_length[i]	
+    #print len(f)
     sum_f_prime_tr+=Decimal(temp_fi)/Decimal(tr_length[i])
 #print "Sum = ",sum_f_prime_tr
 

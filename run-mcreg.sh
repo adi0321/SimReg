@@ -142,12 +142,12 @@ done
 
 if [ ! -f ${GTF_File} ];then
 	echo "Error: File $GTF_File not found!"
-	exit 7
+	exit 1
 fi
 
 if [ ! -f ${FA_File} ];then
 	echo "Error: File $FA_File not found!"
-	exit 7
+	exit 1
 fi
 
 					echo ""
@@ -189,8 +189,8 @@ if [[ -z "${SAM_File}" ]]; then
 			((errs++))
 		fi
 	done
-	echo "or use -S option for transcriptome alignment"
-	((errs > 0)) && usage
+	
+	((errs > 0)) && echo "or use -S option for transcriptome alignment" &&usage
 
 	if [ ! -f $obs_pair1_file ];then
 		echo "Error: File $obs_pair1_file not found!"
@@ -203,8 +203,8 @@ if [[ -z "${SAM_File}" ]]; then
 	fi
 	
 					echo ""
-					echo "Other Input Parameters:"
-					echo "   REF_File: $REF_File"
+					echo "Input Parameters for Bowtie Mapping:"
+					echo "   Reference: $REF_File"
 					echo "   Pair 1 sequences file: $obs_pair1_file"
 					echo "   Pair 2 sequences file: $obs_pair2_file"
 
@@ -235,7 +235,8 @@ if [[ -z "${SAM_File}" ]]; then
 	
 
 	start_time=`date +%s`
-	bowtie --best -v 3 -k 60 -p 16 --chunkmbs 128 $REF_File ${input_option} -1 $obs_pair1_file -2 $obs_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_OBS_60multiAligns.sam
+	echo "bowtie --best -v 3 -k 60 -p 16 --chunkmbs 128 $REF_File ${input_option} -1 $obs_pair1_file -2 $obs_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_OBS_k60v3best.sam"
+	bowtie --best -v 3 -k 60 -p 16 --chunkmbs 128 $REF_File ${input_option} -1 $obs_pair1_file -2 $obs_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_OBS_k60v3best.sam
 	
 	#-v <int> Report alignments with at most <int> mismatches.
 	#bowtie -k 60 -p 12 -v 0 --chunkmbs 128 $REF_File ${input_option} -1 $obs_pair1_file -2 $obs_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_OBS_60multiAligns.sam
@@ -244,13 +245,13 @@ if [[ -z "${SAM_File}" ]]; then
 	echo Done Mapping observed reads! Execution Time: `expr $end_time - $start_time`s.
 	echo ""
 	
-	#Does the SAM file requires sorting?
-	SAM_File=$PWD/bowtie_OBS_60multiAligns.sam
+	#Does this SAM file requires sorting?
+	SAM_File=$PWD/bowtie_OBS_k60v3best.sam
 fi
 
 if [ ! -f ${SAM_File} ];then
 	echo "Error: File $SAM_File not found!"
-	exit 7
+	exit 1
 fi
 
 echo "SAM_File = $SAM_File"
@@ -291,7 +292,7 @@ if [[ -z "${CC_Path}" ]]; then
 	echo "Done Computing Connected Components! Execution Time:" 
 	${SCRIPT_DIR}/utils/seconds.sh $tsec
 	echo ""
-	
+
 	CC_Path=$PWD
 else
 	#Else if path to connected components is given we'll need to copy the singleTrGenes.txt file
@@ -303,10 +304,12 @@ fi
 #echo -e "\nStep 2 - Run MCReg for each component (that has more than 1 transcript)"
 ##############################
 
-#components=`ls $CC_Path`
-#echo "$components" | head
+	if [ $DEBUG -ne 0 ]; then
+		components=`ls $CC_Path`
+		echo "$components" | head
+	fi
 
-
+	
 #split the components into procs, where procs is the number of processors used
 #procs=10
 #First get the total number of components
@@ -334,7 +337,7 @@ echo "Path to Connected Components: $CC_Path"
 			echo "REF File = $REF_File"
 			echo "precision = $precision"
 		fi
-			
+		
 	#${SCRIPT_DIR}/scripts/simReg.sh -m $mean -d $deviation -l $read_length -r $rpf -G $GTF_File -F $FA_File -s $SCRIPT_DIR -C $CC_Path
 	${SCRIPT_DIR}/simreg -G $GTF_File -F $FA_File -m $mean -d $deviation -l $read_length -t $precision -s $SCRIPT_DIR -C $CC_Path
 	#exit 7

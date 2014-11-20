@@ -130,6 +130,7 @@ cout<<"\n\t["<<current_time()<<"] Reads References had been collected"<<endl;
 map<vector<string>, map<string, int> > mcReadsClassesRef; //references for OBS reads classes.
 //references for reads classes. Reports how many reads comes from each transcript.
 
+//2014.07.05: Obs. Here we use simulated reads to compute new observed. 
 prepro_extract_read_classes_cc(readsBowtie_file, obsReadsClasses, mcReadsRef, mcReadsClassesRef);
 //extract_obsRC(obsRBowtie_file, obsReadsClasses);
 
@@ -158,6 +159,7 @@ cout<<"Total number of Observed Reads classes is: "<<obsReadsClasses.size()<<end
 		cout<<"\nOBS Reads Classes \t Size:"<<endl;
 			print(obsReadsClasses);
 			cout<<endl;
+			//exit(7);
 	#endif
 
 
@@ -296,6 +298,8 @@ for(const auto &tr : crudeFreq)
 
 		cout<<endl<<"Current Observed Counts:"<<endl;
 		print(obsReadsClasses);
+		
+		//exit(7);
 	#endif
 	
 //Update observed counts:
@@ -309,8 +313,15 @@ for(const auto &rc : obsReadsClasses)
 		newObsCounts+=(double)d_value[trName][rc.first]*crudeFreq[trName];
 	}
 	
-	//cout<<"new Obs Counts = "<<newObsCounts<<endl;
-	obsReadsClasses[rc.first]=newObsCounts*totalNReads;
+	
+	//#7/1/14#Round up - for those cases when totalNReads is 1
+	obsReadsClasses[rc.first]=ceil(newObsCounts*totalNReads);
+		
+		#if DEBUG
+			cout<<"new Obs Counts = "<<newObsCounts<<endl;
+			cout<<"obsReadsClasses[rc.first]=newObsCounts*totalNReads = "<<obsReadsClasses[rc.first]<<endl;
+			//exit(7);
+		#endif
 }
 
 
@@ -363,6 +374,8 @@ cout<<"["<<current_time()<<"] ~~~~~ Done: adjacency matrix has been computed"<<e
 cout<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl<<endl;				
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/		
+//2014.07.04: Q: Do we need components at this step?
+//Future TODO: Remove CC from here to improve running time (this is a redundant work way which is not required anymore)
 
 cout<<"\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
 cout<<"["<<current_time()<<"] Computing Connected Components ... "<<endl;
@@ -490,12 +503,13 @@ read_classes_stream.close();
 /****************************
 *	Write transcripts from each component to file	*
 *****************************/
-
+//2014.07.05 - We need to simplify everything and make only one component
 	
 	//go thorugh components
 	//cout<<"component size is: "<<component.size()<<endl;
 	//CREATE MAP THAT WILL HOLD ALL THE COMPONENTS (transcript names):
 	map<int, vector<string>> cc;
+	//2014.07.04: Q: Do we need components here?
 	
 	//CREATE MAP THAT WILL HOLD ALL READ CLASSES AND COUNTS
 	map<int, vector<string>> rcCounts;
@@ -511,11 +525,18 @@ read_classes_stream.close();
 		Vertex & vertex = G.graph()[i];
 		//cout<<"i="<<i<<" Element from component: "<<component[i]<<" is "<<vertex.vertexName<<endl;
 		
+		
+	//2014.07.04 write 0 instead of i all the time (in this way we'll have one component) -- this must be removed in the future and write the programm without components
+	
 		if(vertex.vertexName[0] != '[')//if the first character is not [
-			cc[component[i]].push_back(vertex.vertexName);
+		{
+			//cc[component[i]].push_back(vertex.vertexName);
+			cc[0].push_back(vertex.vertexName);
+		}
 		else
 		{ //if the first character it is a "[" then this a read class
-			rcCounts[component[i]].push_back(vertex.vertexName);
+			//rcCounts[component[i]].push_back(vertex.vertexName);
+			rcCounts[0].push_back(vertex.vertexName);
 		}
 	}//end: for each component
 	
@@ -527,40 +548,43 @@ read_classes_stream.close();
 					for(const auto &elem : cmp.second)
 						cout<<"\t\t"<<elem<<endl;
 			}
+			
+			//exit(7);
 		#endif
 	
 //Now print to file
 cout<<"\nWrite observed transcripts names\n\t"<<endl;
 
 ofstream d_stream_new2;
-ofstream resultStream;
-string resultsFile="../singleTrGenes.txt";
-resultStream.open(resultsFile.c_str(),ios::app);//open file in append mode (in order to avoid overwritting)
-	
-if(!resultStream){
-	cout<<"Unable to open " <<resultsFile<<endl;
-		exit(1);
-}
 
+
+
+//2014.07.04: Actually here we should not have components anymore - since we already solving this for one component
+		//Put all values in a single file --> pay attention to be sorted
+
+stringstream command1;
+//command1<<"mkdir "<<cmp.first;
+command1<<"mkdir 0";
+system(command1.str().c_str());
 
 //For each component
 for(const auto &cmp : cc)	
 {//for each component there is a vector with transcript names
 
 
+
+//2014.07.05 - Put all components within single file -- No need to check
+
 //Check the size of the component and if it is 1 then just write the results to file
-if( cmp.second.size()< 2 )
+/*if( cmp.second.size()< 2 )
 {
 	resultStream<<cmp.first<<"\t"<<cmp.second.size()<<"\t"<<obsReadsClasses[cmp.second];
 	resultStream<<"\t"<<cmp.second.front()<<"\t1"<<endl;
 	//cmpID---#tr.---#ObsReads---Transcript names
 
 	continue; //continue to the next component
-}
+}*/
 
-stringstream command1;
-command1<<"mkdir "<<cmp.first;
-system(command1.str().c_str());
 
 d_stream_new2.clear(); //reuse the same stream (just clear the state flags)
 stringstream outFile;
@@ -666,7 +690,87 @@ d_stream_new2.close();
 }//end:for each cc	
 
 
-resultStream.close();
+/****************************
+*	Write d values to file	(added on 07/05/2014 from compute_sRC_d.cpp)*
+*****************************/
+//string d_file_new2=gtf.substr(0,gtf.find_last_of("."))+"_d_values.txt";
+string d_file_new2="./0/0_d_values.txt";
+
+cout<<"\nWrite d_t,r values to: \n\t"<<d_file_new2<<endl;
+
+//ofstream d_stream_new2;
+d_stream_new2.clear(); //reuse the same stream (just clear the state flags)
+
+d_stream_new2.open(d_file_new2.c_str());
+		
+	if(!d_stream_new2){
+		cout<<"Unable to open" <<d_file_new2<<endl;
+		exit(1);
+	}
+	
+
+//Now print to file
+
+//for each transcript -- print transcript -- print class -- print d values
+	for (const auto &tr : p_value_new2){
+
+		//for each class in the current transcript
+		for (const auto &read_class : tr.second ){		
+				d_stream_new2<<tr.first<<"\t[\t";
+
+			//for each transcript in this class
+			for (const auto &tr_class : read_class.first)
+				d_stream_new2<<tr_class<<"\t";
+				
+				
+			d_stream_new2<<"]\t"<<read_class.second<<"\n";
+			//No need for scientific since now there are only integers
+			//d_stream_new2<<"]\t"<<scientific<<read_class.second<<"\n";
+			//d_stream_new2<<" ] \t "<<setprecision(50)<<read_class.second<<"\n";
+			//d_stream_new2<<p_value_new2[tr.first][read_class.first]<<"\t";
+			
+		}//end: for each class
+	}//end: for each transcript	
+
+
+d_stream_new2.close();
+		
+		
+/*********************************
+*********************************/
+
+//Write MC Read Classes (only) to File 
+//string read_classes_file2=gtf.substr(0,gtf.find_last_of("."))+"_read_classes2.txt";
+string read_classes_file2="./0/0_read_classes2.txt";
+
+cout<<"\nWrite read classes to: \n\t"<<read_classes_file2<<endl;
+ofstream read_classes_stream;
+read_classes_stream.open(read_classes_file2.c_str());
+		
+if(!read_classes_stream){
+	cout<<"Unable to open" <<read_classes_file2<<endl;
+		exit(1);
+}
+
+//for each read class
+for (const auto &read_class : obsReadsClasses) {
+
+		//print to file the class name
+		read_classes_stream<<"[ ";
+		for (const auto &cluster : read_class.first){
+				read_classes_stream<<cluster<<" ";
+		}
+		read_classes_stream<<"]"<<endl;
+}
+read_classes_stream.close();
+/*********************************************************************************
+**********************************************************************************/
+
+		
+		
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	
+
+
 		
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~			
 			

@@ -44,6 +44,7 @@ int main(int argc, char** argv)
 {
 
 cout<<"\nRunning "<<argv[0]<<endl;
+cout<<"Please wait, this may take few minutes"<<endl;
 
     	// Wrap everything in a try block.  Do this every time, 
 	// because exceptions will be thrown for problems. 
@@ -127,7 +128,7 @@ cout<<"\nRunning "<<argv[0]<<endl;
 		#endif
     
 
-	#pragma omp parallel for num_threads(24) schedule(dynamic)
+	#pragma omp parallel for num_threads(32) schedule(dynamic)
 	for(int i=0; i<directory.size(); i++)
 	{
 	
@@ -156,10 +157,15 @@ cout<<"\nRunning "<<argv[0]<<endl;
 		stringstream bash_command;
 		
 		if(grinder)
+		{
 			bash_command<<"nice "<<SCRIPT_DIR<<"/scripts/simReg_cc.sh -g -m "<<mean<<" -d "<<dev<<" -l "<<readLength<<" -r 2 -G "<<gtf<<" -F "<<fa<<" -s "<<SCRIPT_DIR<<" -C "<<CC_PATH<<" -c "<<directory[i];
+		}
 		else
-			bash_command<<"nice "<<SCRIPT_DIR<<"/scripts/simReg_cc.sh -m "<<mean<<" -d "<<dev<<" -t "<<tuning<<" -l "<<readLength<<" -r 2 -G "<<gtf<<" -F "<<fa<<" -s "<<SCRIPT_DIR<<" -C "<<CC_PATH<<" -c "<<0; //directory[i];
-		
+		{
+			//default case
+			bash_command<<"nice "<<SCRIPT_DIR<<"/scripts/simReg_cc.sh -m "<<mean<<" -d "<<dev<<" -t "<<tuning<<" -l "<<readLength<<" -r 2 -G "<<gtf<<" -F "<<fa<<" -s "<<SCRIPT_DIR<<" -C "<<CC_PATH<<" -c "<<directory[i];//<<" > ./simReg_cc.log";
+			//100919;
+		}
 			#if DEBUG
 				cout<<"bash_command = "<<bash_command.str().c_str()<<endl;
 				//exit(7);

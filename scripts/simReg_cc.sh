@@ -1,5 +1,7 @@
 #!/bin/bash
 
+startCmpTime=`date +%s`
+
 #This is only for one component
 readonly DEBUG=0
 		
@@ -173,17 +175,23 @@ done
 		fi
 	
 	
-	#echo "Create the gtf and fa file for each transcript in current component"
-	#start_time=`date +%s`
+	echo "Create the gtf and fa file for each transcript in current component ${cID}"
+	start_time=`date +%s`
 	for tran in $tr_names
 	do
 		#echo "Transcript name: $tran"
 		
 		grep $tran $GTF_File >> ${cID}.gtf
-		grep -A 1 $tran $FA_File >> ${cID}.fa
+		
+		#grep -A 1 $tran $FA_File >> ${cID}.fa
+		
+		#Remember that the shell will do shell interpolation before the program gets to AWK, 
+		#so ${tran} will be replaced by the value. To be more safe, you might want to use
+		#awk '/'$tran'/{print "Hello"}' $FA_File | head
+		awk '/'$tran'/{p=1;print;next} p&&/^>/{p=0};p' $FA_File >> ${cID}.fa 
 	done
-	#end_time=`date +%s`
-	#echo Done: `expr $end_time - $start_time` s.
+	end_time=`date +%s`
+	echo Done: `expr $end_time - $start_time` s.
 	
 	#Check to make sure that both gtf and fa have the same number of transcripts
 	#number of transcripts in the fa file
@@ -192,12 +200,12 @@ done
 	
 	#Get total number of transcripts from the gtf
 	tnt=`${SCRIPT_DIR}/utils/get_isoforms.sh ${cID}.gtf | wc -l`
-	#echo "tnt=$tnt"
-	
-		if [[ $tnt -gt 50 ]]; then
-			echo "Total Number of transcripts is $tnt --> exit component $cID" >> ../../largeComponents.txt
-			exit 7
-		fi
+	echo "tnt=$tnt"
+
+		#if [[ $tnt -gt 50 ]]; then
+		#	echo "Total Number of transcripts in component $cID is $tnt" >> ../../largeComponents.txt
+			#exit 7
+		#fi
 	
 	
 	#echo -e "\nPreparing simulation.properties file for IsoEM simulator ..."
@@ -336,9 +344,9 @@ done
 		else
 			#else use SimReg Simulator
 			#echo -e "\nGenerating Monte Carlo Reads using SimReg Reads Simulator..."
-			${SCRIPT_DIR}/utils/sim-reads $PWD/${cID}.fa $mean $read_length > sim-reads.log
+			${SCRIPT_DIR}/utils/sim-reads $PWD/${cID}.fa $mean $read_length #> sim-reads.log
 			wait
-			
+
 			mc_pair1_file=$PWD/simreg-reads-pair1.fa
 			mc_pair2_file=$PWD/simreg-reads-pair2.fa
 			
@@ -356,6 +364,23 @@ done
 		#Step 10: Make bowtie index
 		#echo -e "\nBuilding Bowtie indexes for ${cID}.fa ...\n"
 			
+		start_time=`date +%s`
+		bowtie-build ${cID}.fa $cID > /dev/null 2>&1
+		wait
+		end_time=`date +%s`
+		#echo Done: execution time was `expr $end_time - $start_time` s.
+		
+		#echo -e "\nMapping Monte Carlo reads using Bowtie ...\n"
+		#Fragment insert length range
+		fil_min=$(($mean-(3*$deviation)))
+		fil_max=$(($mean+(3*$deviation)))
+		
+		start_time=`date +%s`
+		#bowtie -v 0 -k 30 -p 12 $cID $input_option -1 $mc_pair1_file -2 $mc_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_MC_60multiAligns.sam
+		bowtie -v 0 -k 60 -p 4 --chunkmbs 128 $cID $input_option -1 $mc_pair1_file -2 $mc_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_MC_60multiAligns.sam > /dev/null 2>&1
+		wait
+		mcSAM_File=$PWD/bowtie_MC_60multiAligns.sam
+		
 				if [ $DEBUG -ne 0 ]; then
 					echo "Reference fasta file: ${cID}.fa"
 					echo -e "\tInput Option is: $input_option"
@@ -365,24 +390,6 @@ done
 					echo "in $PWD"
 				fi
 		
-		start_time=`date +%s`
-		bowtie-build ${cID}.fa $cID > /dev/null 2>&1
-		wait
-		end_time=`date +%s`
-		#echo Done: execution time was `expr $end_time - $start_time` s.
-		
-		#echo -e "\nMapping Monte Carlo reads using Bowtie ...\n"
-		#Fragment insert length range
-		fil_min=$(($mean-(4*$deviation)))
-		fil_max=$(($mean+(4*$deviation)))
-		
-		start_time=`date +%s`
-		#bowtie -v 0 -k 30 -p 12 $cID $input_option -1 $mc_pair1_file -2 $mc_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_MC_60multiAligns.sam
-		bowtie -v 0 -k 60 -p 4 --chunkmbs 128 $cID $input_option -1 $mc_pair1_file -2 $mc_pair2_file -I $fil_min -X $fil_max -S $PWD/bowtie_MC_60multiAligns.sam > bowtieSimReg.log
-		wait
-		mcSAM_File=$PWD/bowtie_MC_60multiAligns.sam
-		
-
 		#end_time=`date +%s`
 		#echo Done Mapping Monte Carlo Reads! Execution time: `expr $end_time - $start_time` s.
 		#echo ""
@@ -415,7 +422,7 @@ if [[ $tnt -eq 0 ]]; then
 else
 		#Else run the solver
 		
-		#echo "Computing Simulated Read Classes and D Values(compute_sRC_d)"
+		echo "Computing Simulated Read Classes and D Values(compute_sRC_d)"
 		
 		start_time=`date +%s`
 		${SCRIPT_DIR}/lib/compute_sRC_d ${cID}.gtf $refFile $PWD/bowtie_MC_60multiAligns.sam ${CC_Path}/obsRCcounts.txt >> sim-reads.log
@@ -443,7 +450,6 @@ else
 		#echo Done MCReg_CC_v2 execution time: `expr $end_time - $start_time` s.
 		#echo ""
 		
-		#exit 7
 		
 		#Step 12: Run qp solver and compute the transcripts frequency
 		#Total number of mapped observed reads
@@ -458,7 +464,8 @@ else
 			fi
 
 		#start_time=`date +%s`
-		${SCRIPT_DIR}/scripts/MCReg.sh $PWD/${cID}.gtf $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads $estimFile ${CC_Path}/obsRCsize.txt > MCReg.sh.log
+		${SCRIPT_DIR}/scripts/MCReg.sh $PWD/${cID}.gtf $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads $estimFile ${CC_Path}/obsRCsize.txt #> MCReg.sh.log
+
 		#end_time=`date +%s`
 		#User regular observed file (the one that will be created in temp) ?
 		#echo Done MCReg.sh in `expr $end_time - $start_time` s.
@@ -604,7 +611,8 @@ fi
 				fi
 					
 			start_time=`date +%s`
-			${SCRIPT_DIR}/lib/compute-nextCounts $mcSAM_File $estimFile $mc_pair1_file $total_obs_reads
+			#7/5/2014 - In order to keep the same classes we'll need to load them in memory
+			${SCRIPT_DIR}/lib/compute-nextCounts2 $mcSAM_File $estimFile $mc_pair1_file $total_obs_reads ${CC_Path}/obsRCcounts.txt
 			#argv[1] Mapped reads (sam file)
 			#argv[2] Transcripts Freq.
 			#argv[3] File with pair 1 to extract references
@@ -615,28 +623,32 @@ fi
 			echo ""																													#@@@@
 			#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 		fi
-		
+
 			##Use same d values and read classes
-			${SCRIPT_DIR}/lib/MCReg_CC_v2 ../${cID}_d_values.txt ../${cID}_read_classes2.txt $PWD/0/obsRCcounts.txt 1 1 
+			##Obs 2014.07.05: But this time we may have different read classes (so why not use current read classes and d values?)
+				##But we need the same size for observed bc we have to do the subtraction few steps below
+				
+			${SCRIPT_DIR}/lib/MCReg_CC_v2 ../${cID}_d_values.txt ../${cID}_read_classes2.txt $PWD/0/obsRCcounts.txt 1 1
+			#${SCRIPT_DIR}/lib/MCReg_CC_v2 $PWD/0/0_d_values.txt $PWD/0/0_read_classes2.txt $PWD/0/obsRCcounts.txt 1 1			
 			#>& mcreg_cc.log.txt
-		
+
 			#Run qp solver and compute the transcripts frequency
 			#Total number of mapped observed reads
 			total_obs_reads2=`awk '{ total+=$NF} END{print total}' $PWD/0/obsRCcounts.txt`
 			echo "total_obs_reads2 = $total_obs_reads2"
-		
+	
 			d_values_file=`ls d_value*`
 			
 			echo "d_values_file is: $d_values_file"
-			
+
 			#This script computes o_values 
 			#This d_value file also contain the new observed values (the new d values file was computed above by MCReg_CC_v2)
 
-			
+			#obsRCsize should be the same if we keep the same obs read classes since is just 1 / number of tr in the class
 			${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.gtf $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads2 $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
 				#argv 5 - output file
 			echo "Run ${i}: Done MCReg.sh"
-			
+
 			##Now compute delta and deltaSquare
 			##Simulated Reads = ./temp/0_o_values.txt
 			##Observed Reads = ../temp/0_o_values.txt
@@ -659,8 +671,12 @@ fi
 			cur_deltaSq=`awk '{ printf("%.10f", $1)}' <<< $cur_deltaSq`
 			echo "Current sum of delta (squares) (without scientific notation) = $cur_deltaSq"		
 			
-			python ${SCRIPT_DIR}/scripts/correl.py ./temp/0_o_values.txt ../temp/0_o_values.txt >> ../temp/reads_correl.txt
-
+			
+			if [ $DEBUG -ne 0 ]; then
+				python ${SCRIPT_DIR}/scripts/correl.py ./temp/0_o_values.txt ../temp/0_o_values.txt >> ../temp/reads_correl.txt
+			fi
+			
+			
 			#this file contains all delta squares
 			awk '{ sum += $1 } END { print sum }' deltaSq_${i}.txt >> ../temp/deltaSq.sum.txt
 			
@@ -717,7 +733,7 @@ fi
 			method=1
 			if [[ $method -eq "1" ]];then
 				echo "Method 1"
-				${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.gtf $PWD/${d_values_file} $PWD/../temp/aimed_reads.norm.txt $total_obs_reads2 $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
+				${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.gtf $PWD/../${d_values_file} $PWD/../temp/aimed_reads.norm.txt $total_obs_reads2 $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
 			else
 				echo "Method 2"
 				#this is the method from MCReg v5
@@ -725,7 +741,7 @@ fi
 				paste ../temp/0_o_values.txt ./DELTA_${i}.txt | awk '{ if (($1-($2/2)) < 0) { print 0 } else {print ($1-($2/2))} }' > ./0_o_values2.txt
 				${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.gtf $PWD/${d_values_file} $PWD/0_o_values2.txt $total_obs_reads2  $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
 			fi
-			
+
 			#copy the estimates file one level up
 			cat $PWD/mcreg.iso.estimates > ../mcreg.iso.estimates
 			
@@ -751,40 +767,40 @@ fi
 			#for each transcript extract true freq from ref
 			
 			ref=${GTF_File%.*}
-			echo "ref=$ref"
+			#echo "ref=$ref"
 			
-			
+			#Execute this only if true transcript frequencies ${ref}.tr.freq.norm exists
 			#pwd: precision directory
 			
-			for tran in $tr_names
-			do
-				#echo "Transcript name: $tran"
+			if [ -f ${ref}.tr.freq.norm ];then
 		
-				grep $tran ${ref}.tr.freq.norm >> ./true.tr.freq
-				
-			done
+				for tran in $tr_names
+				do
+					#echo "Transcript name: $tran"
+		
+					grep $tran ${ref}.tr.freq.norm >> ./true.tr.freq
+				done
 
-			#sort and extract only the values
-			
-			sort ./true.tr.freq | awk '{print $2}' > ./true.tr.freq.noNames
+				#sort and extract only the values
+				sort ./true.tr.freq | awk '{print $2}' > ./true.tr.freq.noNames
 
-			current_correl=`python ${SCRIPT_DIR}/scripts/correl.py ./true.tr.freq.noNames ./mcreg.iso.estimates_noNames`
-			echo "current_correl = $current_correl"
+				current_correl=`python ${SCRIPT_DIR}/scripts/correl.py ./true.tr.freq.noNames ./mcreg.iso.estimates_noNames`
+				echo "current_correl = $current_correl"
 			
-			echo -e "${cID}\t${current_correl}\t${tnt}" >> ../../comp_correl.txt
+				echo -e "${cID}\t${current_correl}\t${tnt}" >> ../../comp_correl.txt
 				#tnt holds total number of transcripts
 	
 			
-			##Compute Squared Deviation for transcripts
-			paste ./true.tr.freq.noNames ./mcreg.iso.estimates_noNames | awk '{ print (($1-$2)**2); }' >> ./tr_sqDev.txt
+				##Compute Squared Deviation for transcripts
+				paste ./true.tr.freq.noNames ./mcreg.iso.estimates_noNames | awk '{ print (($1-$2)**2); }' >> ./tr_sqDev.txt
 			
-			#we need the sum of tr_sqDev
-			awk '{ sum += $1 } END { print sum }' ./tr_sqDev.txt >> ./tr_sqDevSum.txt
+				#we need the sum of tr_sqDev
+				awk '{ sum += $1 } END { print sum }' ./tr_sqDev.txt >> ./tr_sqDevSum.txt
 		
 
-		#cp $PWD/mcreg.0.iso.estimates $PWD/mcreg.iso.estimates
-
-		##~~~~~~~2014.02.04~~~~~~~~~~~~~~~~~
+				#cp $PWD/mcreg.0.iso.estimates $PWD/mcreg.iso.estimates
+			fi
+				##~~~~~~~2014.02.04~~~~~~~~~~~~~~~~~
 		
 		
 		
@@ -846,12 +862,14 @@ fi
 		rm -rf bowtie_MC_60multiAligns.sam
 		
 		#~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		echo "Done component ${cID}"
+		endTotalTime=`date +%s`
+		totalTimeSec=`expr $endTotalTime - $startCmpTime`
+		echo "Done component ${cID} in $totalTimeSec seconds"
+		
 		cd ..
 		
 		#if [[ ${cID} == "37" ]]; then
 		#	echo "cID = $cID"
-		#	exit 7
 		#fi
 		
 #done

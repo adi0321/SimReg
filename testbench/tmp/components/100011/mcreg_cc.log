@@ -1,0 +1,59 @@
+
+Running /home/adrian/SimRegBest/lib/MCReg_CC_v2 ...
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:45 2014] Step1: Parse d_values file 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:45 2014] ~~~~~ Done! ~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:45 2014] Step2: Load MC read classes from the pre-processed file 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Monte Carlo Reads classes had been loaded into memory! - current size: 35
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:45 2014] ~~~~~ Done! ~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:45 2014] Step3: Load observed reads counts 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	extract_read_classes: 
+		Parameters: 
+			1. Read Classes Counts File: /home/adrian/SimRegBest/testbench/tmp/components/100011/obsRCcounts.txt
+			2. Reads Classes map 
+
+Write unused reads to: 	unused_reads.txt
+Done extract_obsCounts
+Total number of discarded reads is: 0
+~~~ Remining reads = 43466 reads
+Total number of Observed Reads Classes is: 35
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:45 2014] ~~~~~ Done! ~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Compute Observed Reads Classes FREQUENCY:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Observed Classes size: 35
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+~~~~~~~~~~~~~~~~~~~~~~
+Write Values to Files
+~~~~~~~~~~~~~~~~~~~~~~
+For each component
+
+Write d_t,r values to: 
+	d_values.txt
+Number of reads in component 0: 43466
+
+main: Done

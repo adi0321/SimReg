@@ -1,0 +1,77 @@
+
+ SimReg Reads Simulator (2014), Version 2 (April 24, 2014)
+===================================================
+
+
+[Wed Sep  3 17:24:42 2014] Run: /home/adrian/SimRegBest/utils/sim-reads
+
+Input File: /home/adrian/SimRegBest/testbench/tmp/components/0/0.fa
+Mean Fragment Length: 200
+Read Length: 50
+
+Total number of simulated reads: 3693 x2 (paired-end reads)
+
+[Wed Sep  3 17:24:42 2014] Done!
+
+[Wed Sep  3 17:24:44 2014] Extracting Monte Carlo reads References..
+
+
+	extract_reads_references: 
+		Input Parameters: 
+			1. Grinder file: /home/adrian/SimRegBest/testbench/tmp/components/0/simreg-reads-pair1.fa
+			2. Reads Classes map 
+
+	[Wed Sep  3 17:24:44 2014] Monte Carlo Reads References had been collected
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:44 2014] Compute Monte Carlo Reads Classes 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Main: Parsing Bowtie files ...
+
+	extract_read_classes: 
+		Parameters: 
+			1. Bowtie file: /home/adrian/SimRegBest/testbench/tmp/components/0/bowtie_MC_60multiAligns.sam
+			2. Reads Classes map 
+
+Write unused reads to: 	/home/adrian/SimRegBest/testbench/tmp/components/0/unused_reads.txt
+
+~~~ Total number of Monte Carlo reads = 3693
+Total number of Monte Carlo Reads classes is: 6
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:44 2014] ~~~~~ Done! ~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+	extract_read_classes: 
+		Parameters: 
+			1. Read Classes Counts File: /home/adrian/SimRegBest/testbench/tmp/components/0/obsRCcounts.txt
+			2. Reads Classes map 
+
+Write unused reads to: 	unused_reads.txt
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:44 2014] Computing d values... 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Wed Sep  3 17:24:44 2014] ~~~~~ Done: d values had been computed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+~~~~~~~~~~~~~~~~~~~~~~
+Write Values to Files
+~~~~~~~~~~~~~~~~~~~~~~
+
+Write read classes to: 
+	0_read_classes.txt
+
+Write read classes to: 
+	0_read_classes2.txt
+
+Write d_t,r values to: 
+	0_d_values.txt
+
+main: Done

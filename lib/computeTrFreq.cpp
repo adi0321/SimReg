@@ -222,7 +222,7 @@ double compare(vector<double> a, vector<double> b){
 	}
 
 //----------------------------------------------------------------------------------------------------------
-//---- GTF2JUNCTION ----------------------------------------------------------------------------------------
+//---- Get ALL Transcripts Names ----------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------
 //open gtf and get all information
 void getTrNames(string gtf,	map<string, double> &tr_freq){
@@ -248,6 +248,11 @@ void getTrNames(string gtf,	map<string, double> &tr_freq){
 	
 	while(ingtf.good()){
 		getline(ingtf,line);
+		
+			//skip the headers
+	 		while(line.substr(0,1)=="#")
+	 			getline(ingtf,line);
+				
 		if(!line.empty()){
 			istringstream iss(line);
 			//cout<<line<<endl;
@@ -255,6 +260,9 @@ void getTrNames(string gtf,	map<string, double> &tr_freq){
 			//cout<<field<<endl;
 			getline(iss,field,'\t');
 			getline(iss,field,'\t');
+				string lineType=field.c_str();
+				if(lineType.compare("gene")==0)
+					continue;
 			getline(iss,field,'\t');
 			getline(iss,field,'\t');
 			getline(iss,field,'"');
