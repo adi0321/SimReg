@@ -128,7 +128,7 @@ cout<<"Please wait, this may take few minutes"<<endl;
 		#endif
     
 
-	#pragma omp parallel for num_threads(32) schedule(dynamic)
+	#pragma omp parallel for num_threads(24) schedule(dynamic)
 	for(int i=0; i<directory.size(); i++)
 	{
 	

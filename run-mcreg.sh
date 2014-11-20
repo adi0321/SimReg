@@ -31,7 +31,7 @@ Mandatory options:
    -F <FA_File> Reference FASTA File with transcript sequences
    -1 <m1>  FA or FASTQ File containing sequences paired with mates in <m2>
    -2 <m2>  FA or FASTQ File containing sequences paired with mates in <m1>
-   -R <Ref_File> Reference base name (transcript sequencies and indexes)
+   -R <Ref_File> Reference base name (path with prefix to indexes)
    -S <SAM_File> File with aligned reads to trnascripts - Bowtie output - (Full path to file)
    (The following Bowtie command is used to align observed reads if no alignment is given:
    bowtie -k 60 -p 12 --chunkmbs 128 [REF_File] {-f | -g} -1 [obs_pair1_file] -2 [obs_pair2_file] -I [fragInsLenMin] -X [fragInsLenMax] -S [outFile])
@@ -286,7 +286,14 @@ if [[ -z "${CC_Path}" ]]; then
 	##Step 1.B - Compute Connected Components
 	echo -e "\nComputing Connected Components..."
 	start_time=`date +%s`
-	${SCRIPT_DIR}/lib/compute_obsRC_CC $SAM_File
+	${SCRIPT_DIR}/lib/compute_obsRC_CC $SAM_File $GTF_File $FA_File
+	
+	if [[ $? -eq "1" ]];
+	then
+		echo "Error in compute_obsRC_CC"
+		exit 1
+	fi
+	
 	end_time=`date +%s`
 	tsec=`expr $end_time - $start_time`
 	echo "Done Computing Connected Components! Execution Time:" 
@@ -340,7 +347,7 @@ echo "Path to Connected Components: $CC_Path"
 		
 	#${SCRIPT_DIR}/scripts/simReg.sh -m $mean -d $deviation -l $read_length -r $rpf -G $GTF_File -F $FA_File -s $SCRIPT_DIR -C $CC_Path
 	${SCRIPT_DIR}/simreg -G $GTF_File -F $FA_File -m $mean -d $deviation -l $read_length -t $precision -s $SCRIPT_DIR -C $CC_Path
-	#exit 7
+
 #done
 
 echo "Move out from components directory"
@@ -370,46 +377,10 @@ done
 #Add the results from singleTrGenes.txt --- here we need to extract the transcript length for each gene
 #And concatenate the results at the end to results.txt
 
-
-
 #Compute total_sum_reads_portion		
-		
-#awk '($3=="exon") || ($2=="exon")  {ID=$12;L[ID]+=$5-$4+1} END{for(i in L){print i, L[i]}}' $gtf | sort | awk '{print $1, $2}'
-
-#for now I will compute the transcript length separate 
-#Compute transcripts lengths:
-singleTrGenes=`awk '{ print $4}' singleTrGenes.txt`
-trLen="${GTF_File%.*}.trLen.txt"
-if [ -f $trLen ];then
-	echo "Extract transcripts lengths from $trLen"
-fi
-
-if [ -f "singleTrGenes.txt" ]; then
-
-for tran in $singleTrGenes
-do
-	#echo "Concatenate the results for Genes with single transcript"
-	#initial info about this transcript
-	initTr=`grep -w $tran singleTrGenes.txt`
-	#echo "initial Transcript = $initTr"
 	
-	for i in $initTr
-	 do
-		echo -e "$i\t\c" >> results.txt
-		#\c is used to redirect on the same line
-	 done
-	 
-	#Done (5/3/2014): We have a file in the annotation with the length of all transcripts and directly grep from there bc otherwise is too slow
-	if [ -f $trLen ];then
-		tr_length=`grep $tran $trLen | awk '{print $2}'`
-	else
-		tr_length=`grep -w $tran $GTF_File | awk '($3=="exon") || ($2=="exon")  {ID=$12;L[ID]+=$5-$4+1} END{for(i in L){print i, L[i]}}' | sort | awk '{print $2}'`
-	fi
-	 
-	echo $tr_length >> results.txt
-	 
-done
-fi
+# Load files in C++
+${SCRIPT_DIR}/lib/combineFiles "singleTrGenes.txt" "trLen.txt" "results.txt"
 
 echo "Compute Total Sum for Reads Portion of each Component"
 

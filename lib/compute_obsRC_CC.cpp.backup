@@ -54,7 +54,7 @@
 
 
 //DEBUGGING CONSTANTS:
-#define DEBUG 0
+#define DEBUG 1
 #define DEBUG_READ 0 //debug at read level
 #define DEBUG_GF 0 //debug for genes frequency
 #define DEBUG_T 0 //debug Transcripts
@@ -90,12 +90,10 @@ void print(const map<vector<int> , vector<pair<int, int> > > &myMap);
 void print(const map< map<string, bool> , double> &myMap);
 void print(const map<string, map< map<string, bool> , int> > &myMap);
 
-void splitCmp (int cmpID, vector<string> trVec, map<int, vector<string>> &rcCounts, map<string, vector<string>> &rcID_reverse, map<vector<string>, int> &obsReadsClasses, map<vector<string>, string> &rcID, map<string, map<string, int>> &gtf, map <string, string> &fa);
+void splitCmp (int cmpID, vector<string> trVec, map<int, vector<string>> &rcCounts, map<string, vector<string>> &rcID_reverse, map<vector<string>, int> &obsReadsClasses, map<vector<string>, string> &rcID);
 
 void loadGTF(string &gtf_file, map<string, map<string, int>> &gtf);
 void loadFA(string &fa_file, map<string, string> &fa);
-
-void write2Files(int cmpID, vector<string> transcripts, map<string, map<string, int>> &gtf, map <string, string> &fa);
 
 int readCountThresh=1; //initial read count threshold (counts used to collapse read classes)
 int cmpSizeThresh=100; //initial number of transcripts that is allowed in one component
@@ -516,25 +514,72 @@ if(cmp.second.size() > cmpSizeThresh)
 	//Reset the thereshold value everytime this function is called
 	readCountThresh=1;
 	
-	splitCmp(cmp.first, cmp.second, rcCounts, rcID_reverse, obsReadsClasses, rcID, gtf, fa);
+	splitCmp(cmp.first, cmp.second, rcCounts, rcID_reverse, obsReadsClasses, rcID);
+
 	continue;
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#########################################################################
+stringstream command1;
+command1<<"mkdir "<<cmp.first;
+system(command1.str().c_str());
 
-write2Files(cmp.first, cmp.second, gtf, fa);
+ofstream d_stream_new2;
+ofstream stream_fa;
+ofstream streamTrLength;
 
+
+stringstream outFile;
+stringstream outFaFile;
+stringstream outTrLengthFile;
+
+outFile<<"./"<<cmp.first<<"/obsTr.txt";
+outFaFile<<"./"<<cmp.first<<"/"<<cmp.first<<".fa";
+outTrLengthFile<<"./"<<cmp.first<<"/tr_length.txt";
+
+string d_file_new2=outFile.str();
+string faFile=outFaFile.str();
+string trLengthFile=outTrLengthFile.str();
+
+
+d_stream_new2.open(d_file_new2.c_str());
+stream_fa.open(faFile.c_str());
+streamTrLength.open(trLengthFile.c_str());
+
+
+	if(!d_stream_new2){
+		cout<<"Unable to open " <<d_file_new2<<endl;
+		exit(1);
+	}
+	if(!stream_fa){
+		cout<<"Unable to open " <<faFile<<endl;
+		exit(1);
+	}
+	if(!streamTrLength){
+		cout<<"Unable to open " <<trLengthFile<<endl;
+		exit(1);
+	}
+
+	//for each transcript -- print gene name -- transcript name -- transcript length
+	for (const auto &tr : cmp.second){
+		
+			d_stream_new2<<gtf[tr].begin()->first<<"\t"<<tr<<endl;
+			streamTrLength<<tr<<"\t"<<gtf[tr].begin()->second<<endl;
+			stream_fa<<">"<<tr<<endl<<fa[tr]<<endl;
+	}//end: for each transcript	
+
+d_stream_new2.close();
+stream_fa.close();
+streamTrLength.close();
 //#########################################################################
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ofstream d_stream_new2;
-//d_stream_new2.clear(); //reuse the same stream (just clear the state flags)
 
-stringstream outFile;
-//outFile.str(""); //clear the stringstream
+d_stream_new2.clear(); //reuse the same stream (just clear the state flags)
+outFile.str(""); //clear the stringstream
 outFile<<"./"<<cmp.first<<"/obsRCcounts.txt"; //directory already exists from previous 
-string d_file_new2=outFile.str();
+d_file_new2=outFile.str();
 
 d_stream_new2.open(d_file_new2.c_str());
 	if(!d_stream_new2){
@@ -650,9 +695,8 @@ cout<<"\nDone - Elapsed time: "<<elapsed_secs<<endl;
 //8/29/2014
 //Recursive function
 //Keep Spliting until component gets smaller than let's say 300
-void splitCmp (int cmpID, vector<string> trVec, map<int, vector<string>> &rcCounts, map<string, vector<string>> &rcID_reverse, map<vector<string>, int> &obsReadsClasses, map<vector<string>, string> &rcID, map<string, map<string, int>> &gtf, map <string, string> &fa)
+void splitCmp (int cmpID, vector<string> trVec, map<int, vector<string>> &rcCounts, map<string, vector<string>> &rcID_reverse, map<vector<string>, int> &obsReadsClasses, map<vector<string>, string> &rcID)
 {
-
 	//Note: Leave single transcript classes "as is"
 	
 	int tempCount=0;
@@ -686,7 +730,7 @@ void splitCmp (int cmpID, vector<string> trVec, map<int, vector<string>> &rcCoun
 						#if DEBUG
 							cout<<"Print all initial read classes that belong to component"<<cmpID<<endl;
 							print(cmpObsReadsClasses);
-							//exit(7);
+							exit(7);
 						#endif
 
 						
@@ -965,23 +1009,43 @@ if(cmp.second.size() > cmpSizeThresh)
 	
 	//Recursive Function
 	//cout<<"splitCmp: Call the recursive function"<<endl;
-	splitCmp(cmp.first, cmp.second, rcCountsLocal, rcID_reverse, obsReadsClasses, rcID, gtf, fa);
-	
+	splitCmp(cmp.first, cmp.second, rcCountsLocal, rcID_reverse, obsReadsClasses, rcID);
+
 	continue;
 }
 
 //~~~~~~~
 //Else write to files
+//write2Files();
 
-write2Files(subCmpId, cmp.second, gtf, fa);
-
+stringstream command1;
+//command1<<"mkdir "<<dirPrefix<<"_"<<cmp.first;
+command1<<"mkdir "<<subCmpId;
+system(command1.str().c_str());
 
 d_stream_new2.clear(); //reuse the same stream (just clear the state flags)
 stringstream outFile;
-//outFile.str(""); //clear the stringstream
+//outFile<<"./"<<dirPrefix<<"_"<<cmp.first<<"/obsTr.txt";
+outFile<<"./"<<subCmpId<<"/obsTr.txt";
+string d_file_new2=outFile.str();
+
+d_stream_new2.open(d_file_new2.c_str());
+	if(!d_stream_new2){
+		cout<<"Unable to open " <<d_file_new2<<endl;
+		exit(1);
+	}
+//for each transcript -- print transcript -- print class -- print d values
+	for (const auto &tr : cmp.second){
+		d_stream_new2<<tr<<endl;
+	}//end: for each transcript	
+
+d_stream_new2.close();
+
+d_stream_new2.clear(); //reuse the same stream (just clear the state flags)
+outFile.str(""); //clear the stringstream
 //outFile<<"./"<<dirPrefix<<"_"<<cmp.first<<"/obsRCcounts.txt"; //directory already exists from previous 
 outFile<<"./"<<subCmpId<<"/obsRCcounts.txt";
-string d_file_new2=outFile.str();
+d_file_new2=outFile.str();
 
 d_stream_new2.open(d_file_new2.c_str());
 	if(!d_stream_new2){
@@ -1033,7 +1097,7 @@ d_stream_new2.open(d_file_new2.c_str());
 	}	
 	
 	
-	/*cout<<"print(rcSize)"<<endl;
+	cout<<"print(rcSize)"<<endl;
 	for(int i=0;i<rcSize.size();i++)
     {
          for(int j=0;j<rcSize.size();j++)
@@ -1041,7 +1105,8 @@ d_stream_new2.open(d_file_new2.c_str());
               cout<<rcSize[i][j];   
          }
 		cout<<endl;
-	}*/	
+	}	
+	exit(7);
 	
 	//fill the diagonal with read classes size.
 	//for each read class ID
@@ -1073,78 +1138,23 @@ resultStream.close();
 }//end splitCmp
 
 
-void write2Files(int cmpID, vector<string> transcripts, map<string, map<string, int>> &gtf, map <string, string> &fa){
+void write2Files(){
 
-stringstream command1;
-command1<<"mkdir "<<cmpID;
-system(command1.str().c_str());
-
-ofstream outStreamObsTr;
-ofstream outStreamFa;
-ofstream outStreamTrLength;
-
-stringstream outObsTrFile;
-stringstream outFaFile;
-stringstream outTrLengthFile;
-
-outObsTrFile<<"./"<<cmpID<<"/obsTr.txt";
-outFaFile<<"./"<<cmpID<<"/"<<cmpID<<".fa";
-outTrLengthFile<<"./"<<cmpID<<"/tr_length.txt";
-
-string obsTrFile=outObsTrFile.str();
-string faFile=outFaFile.str();
-string trLengthFile=outTrLengthFile.str();
-
-outStreamObsTr.open(obsTrFile.c_str());
-outStreamFa.open(faFile.c_str());
-outStreamTrLength.open(trLengthFile.c_str());
-
-	if(!outStreamObsTr){
-		cout<<"Unable to open " <<outObsTrFile<<endl;
-		exit(1);
-	}
-	if(!outStreamFa){
-		cout<<"Unable to open " <<faFile<<endl;
-		exit(1);
-	}
-	if(!outStreamTrLength){
-		cout<<"Unable to open " <<trLengthFile<<endl;
-		exit(1);
-	}
-
-	//for each transcript -- print gene name -- transcript name -- transcript length
-	for (const auto &tr : transcripts){
-		
-			outStreamObsTr<<gtf[tr].begin()->first<<"\t"<<tr<<endl;
-			outStreamTrLength<<tr<<"\t"<<gtf[tr].begin()->second<<endl;
-			outStreamFa<<">"<<tr<<endl<<fa[tr]<<endl;
-	}//end: for each transcript	
-
-outStreamObsTr.close();
-outStreamFa.close();
-outStreamTrLength.close();
 }
 
-/*
 void write2FileObsTr(){
-ofstream out;
-stringstream outFile;
-//outFile<<"./"<<dirPrefix<<"_"<<cmp.first<<"/obsTr.txt";
-outFile<<"./"<<subCmpId<<"/obsTr.txt";
-string d_file_new2=outFile.str();
 
 }
 
-void writeTrSeq2FaFile(int cmpID){
+void write2FA_FileTrSeq(){
 //Write to FASTA File the transcripts sequences
 
 }
 
-
 void write2FileTrLengths(){
 
 }
-*/
+
 void print(const vector<pair<int,int> > &myVector){
 	for (const auto& kv : myVector) {
 		cout<<"\t\t\t\t"<<kv.first<<"	"<<kv.second<<endl;

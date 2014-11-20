@@ -9,7 +9,8 @@ then
 	exit 1
 fi
 
-annotation=/import1/GENCODE_v19/gencode.v19.annotation.gtf
+annotation=/import1/GENCODE_v19/gencode.v19.annotation.MAQC.gtf
+
 inFile=$1
 outFile=${1}.MAQC_UHRR.txt
 
@@ -17,7 +18,8 @@ if [ -f ${outFile} ];then
 	rm -rf $outFile
 fi
 
-probes=`awk '{print $1}' /import3/MAQC/TaqMan/UHRR_ENS_expression.1`
+#probes=`awk '{print $1}' /import3/MAQC/TaqMan/UHRR_ENS_expression.1`
+probes=`awk '{print $1}' /data1/adrian/MAQC/UHRR_ENS_expression.avg`
 
 for g in $probes
 do

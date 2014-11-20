@@ -8,7 +8,6 @@ read_length=100
 #Reads Per Fragment
 rpf=2
 
-
 hostname=`hostname`
 
 echo -e "\nRunning: $0 on $hostname ... "
@@ -194,7 +193,7 @@ do
 		fi
 	
 	
-	exit 7
+
 	
 	
 	

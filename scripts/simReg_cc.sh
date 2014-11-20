@@ -175,31 +175,34 @@ done
 		fi
 	
 	
-	echo "Create the gtf and fa file for each transcript in current component ${cID}"
-	start_time=`date +%s`
-	for tran in $tr_names
-	do
+	################################
+	### No need for this step
+	#echo "Create the gtf and fa file for each transcript in current component ${cID}"
+	#start_time=`date +%s`
+	#for tran in $tr_names
+	#do
 		#echo "Transcript name: $tran"
 		
-		grep $tran $GTF_File >> ${cID}.gtf
+	#	grep $tran $GTF_File >> ${cID}.gtf
 		
 		#grep -A 1 $tran $FA_File >> ${cID}.fa
 		
 		#Remember that the shell will do shell interpolation before the program gets to AWK, 
 		#so ${tran} will be replaced by the value. To be more safe, you might want to use
 		#awk '/'$tran'/{print "Hello"}' $FA_File | head
-		awk '/'$tran'/{p=1;print;next} p&&/^>/{p=0};p' $FA_File >> ${cID}.fa 
-	done
-	end_time=`date +%s`
-	echo Done: `expr $end_time - $start_time` s.
-	
+	#	awk '/'$tran'/{p=1;print;next} p&&/^>/{p=0};p' $FA_File >> ${cID}.fa 
+	#done
+	#end_time=`date +%s`
+	#echo Done: `expr $end_time - $start_time` s.
+	###################################################################################
 	#Check to make sure that both gtf and fa have the same number of transcripts
 	#number of transcripts in the fa file
 	#nTFa=`awk {} ${cID}.fa`
 	#echo "nTFa=$nTFa"
 	
 	#Get total number of transcripts from the gtf
-	tnt=`${SCRIPT_DIR}/utils/get_isoforms.sh ${cID}.gtf | wc -l`
+	#tnt=`${SCRIPT_DIR}/utils/get_isoforms.sh ${cID}.gtf | wc -l`
+	tnt=`wc -l $obsTrNames | awk '{print $1}'`
 	echo "tnt=$tnt"
 
 		#if [[ $tnt -gt 50 ]]; then
@@ -208,140 +211,7 @@ done
 		#fi
 	
 	
-	#echo -e "\nPreparing simulation.properties file for IsoEM simulator ..."
-	start_time=`date +%s`
-	
-	
-	#Compute average transcript frequency 
-	avg_tf=`echo "1 / $tnt" | bc -l`
-		
-	#Get number of transcripts in each gene
-	genes_names=`${SCRIPT_DIR}/utils/get_genes.sh ${cID}.gtf`
-		
-	touch $PWD/nt_gene.txt
-	
-	for gene in $genes_names
-	do
-		nt=`grep -w $gene ${cID}.gtf | ${SCRIPT_DIR}/utils/get_isoforms.sh | wc -l`
-		echo "$gene $nt">>$PWD/nt_gene.txt
-	done
-		
-	G_Freq_File=${cID}.cluster_concentrations
-	
-		if [ -s $G_Freq_File ];then
-			rm -rf $G_Freq_File
-		fi
-	
-	write_flag="false"
 
-	nt_gene=`cat $PWD/nt_gene.txt`
-	#nt_gene is a two column file - 1st col is the name of the gene while the second one is the number of tr in the gene
-	for gene in $nt_gene
-	do	
-			if [[ $write_flag == "false" ]]; then
-				gene_name=$gene
-				write_flag="true"
-			else
-				gene_freq=`echo "$gene * $avg_tf" | bc -l`	
-				echo -e "${gene_name}\t${gene_freq}" >> $G_Freq_File
-				write_flag="false"
-			fi
-	done
-		
-		#echo -e "\nCompute number of Monte Carlo reads: " 
-		#get total_exon_length:
-		total_exon_length=`awk '{s+=($5-$4)+1} END {print s}' ${cID}.gtf` 
-
-		#echo "total_exon_length=$total_exon_length"
-		
-		
-		
-		if [[ $simulator == "generate-reads" ]]; then
-	
-			#Calculate number of reads for coverage 1000
-			#ofreads =(coverage x total_exon_length) / (reads_per_fragment * read_length)     (paired-end) 
-			#ofreads=(1000 x $total_exon_length) / 200 	#200 because they are paired-end reads
-
-			mcreads=`echo "(1000 * $total_exon_length) / ($rpf * $read_length)" | bc`
-			#just to be consistent with Grinder --- we'll divide by $read_length only ???
-			#mcreads=`echo "(1000 * $total_exon_length) / $read_length" | bc`
-	
-				if [ $DEBUG -ne 0 ]; then
-					echo "Number of transcripts in each gene: $nt_gene"
-					echo "Total number of transcripts: $tnt"
-					echo "Average transcript frequnecy: $avg_tf"
-					echo "File with genes frequencies: $G_Freq_File"
-					echo "FA File with isoform sequences: ${cID}.fa"
-					echo "Total exon length: $total_exon_length"
-					echo "Total number of Monte Carlo reads to be generated: $mcreads"
-					echo "simulator = $simulator"
-					#exit 7
-				fi
-	
-			if [ -s $PWD/simulation.properties ];then
-				rm -rf $PWD/simulation.properties
-			fi
-	
-			#Step 7: Create simulation.properties				
-			echo "gtfFile=${cID}.gtf">>$PWD/simulation.properties
-			echo "isoformSequencesFile=${cID}.fa">>$PWD/simulation.properties
-			echo "clusterDistribution = customWeights,$G_Freq_File">>$PWD/simulation.properties
-			echo "fragmentLengthDistribution=normal,${mean},${deviation}">>$PWD/simulation.properties
-			echo "fragmentStartingPositionDistribution=uniform">>$PWD/simulation.properties
-			echo "isoformDistribution=uniform">>$PWD/simulation.properties
-			echo "numberOfReads=$mcreads">>$PWD/simulation.properties
-			echo "readLength=$read_length">>$PWD/simulation.properties
-			echo "randomNumberGeneratorSeed=123">>$PWD/simulation.properties
-			echo "readsPerFragment=$rpf">>$PWD/simulation.properties
-			echo "firstReadOrigin=random">>$PWD/simulation.properties
-				
-			rm -rf ./nr=*
-		
-			end_time=`date +%s`
-			echo Done: `expr $end_time - $start_time` s.
-
-		
-			#Step 8
-			echo -e "\nGenerating Reads using \"generate-reads\"..."
-			start_time=`date +%s`
-			generate-reads 
-			wait
-			end_time=`date +%s`
-			echo Done Generating Simulated Reads! Execution time: `expr $end_time - $start_time` s.
-			echo ""
-			
-			mc_pair1_file=`ls *paired_1.fastq`
-			mc_pair2_file=`ls *paired_2.fastq`
-			
-			#fastq files
-			input_option="-q"
-			
-			refFile=`ls *paired.sam`
-			
-		elif [[ $simulator == "grinder" ]]; then
-
-			echo -e "\nGenerating Monte Carlo Reads using Grinder..."
-			
-			command -v grinder >/dev/null 2>&1 || { echo >&2 "
-			ERROR: grinder NOT Found. 
-			Install Grinder Simulator: http://sourceforge.net/projects/biogrinder/
-			Aborting..."; exit 7; }
-			
-			grinder -reference_file ${cID}.fa -coverage_fold 1000 -insert_dist ${mean} uniform ${deviation}
-			wait
-			
-			#Step 2.2: Split grinder file into m1 and m2
-			echo -e "\nSplitting Grinder files into <m1> and <m2> ... " 
-			${SCRIPT_DIR}/utils/split_grinder $PWD/grinder-reads.fa
-	
-			mc_pair1_file=$PWD/grinder-reads_pair_1.fa
-			mc_pair2_file=$PWD/grinder-reads_pair_2.fa
-		
-			#fasta files
-			input_option="-f"
-		
-			refFile="grinder-reads.fa"
-		else
 			#else use SimReg Simulator
 			#echo -e "\nGenerating Monte Carlo Reads using SimReg Reads Simulator..."
 			${SCRIPT_DIR}/utils/sim-reads $PWD/${cID}.fa $mean $read_length #> sim-reads.log
@@ -355,8 +225,7 @@ done
 			
 			#both paires have same reference (so we can use any)
 			refFile=$mc_pair1_file
-		fi
-		
+
 		#Step 9: Map reads to transcriptome using bowtie
 		
 	
@@ -425,7 +294,8 @@ else
 		echo "Computing Simulated Read Classes and D Values(compute_sRC_d)"
 		
 		start_time=`date +%s`
-		${SCRIPT_DIR}/lib/compute_sRC_d ${cID}.gtf $refFile $PWD/bowtie_MC_60multiAligns.sam ${CC_Path}/obsRCcounts.txt >> sim-reads.log
+		#the 1st parameter used to be the gtf ... but it was only used to get the path...fa is used instead
+		${SCRIPT_DIR}/lib/compute_sRC_d ${cID}.fa $refFile $PWD/bowtie_MC_60multiAligns.sam ${CC_Path}/obsRCcounts.txt >> sim-reads.log
 		wait
 
 		end_time=`date +%s`
@@ -464,7 +334,8 @@ else
 			fi
 
 		#start_time=`date +%s`
-		${SCRIPT_DIR}/scripts/MCReg.sh $PWD/${cID}.gtf $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads $estimFile ${CC_Path}/obsRCsize.txt #> MCReg.sh.log
+		#the 1st parameter used to be the gtf ... since it's not used anymore we just insert anyfile...fa is used instead
+		${SCRIPT_DIR}/scripts/MCReg.sh $PWD/${cID}.fa $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads $estimFile ${CC_Path}/obsRCsize.txt #> MCReg.sh.log
 
 		#end_time=`date +%s`
 		#User regular observed file (the one that will be created in temp) ?
@@ -645,7 +516,7 @@ fi
 			#This d_value file also contain the new observed values (the new d values file was computed above by MCReg_CC_v2)
 
 			#obsRCsize should be the same if we keep the same obs read classes since is just 1 / number of tr in the class
-			${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.gtf $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads2 $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
+			${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.fa $PWD/${d_values_file} $PWD/temp/0_o_values.txt $total_obs_reads2 $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
 				#argv 5 - output file
 			echo "Run ${i}: Done MCReg.sh"
 
@@ -733,13 +604,13 @@ fi
 			method=1
 			if [[ $method -eq "1" ]];then
 				echo "Method 1"
-				${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.gtf $PWD/../${d_values_file} $PWD/../temp/aimed_reads.norm.txt $total_obs_reads2 $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
+				${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.fa $PWD/../${d_values_file} $PWD/../temp/aimed_reads.norm.txt $total_obs_reads2 $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
 			else
 				echo "Method 2"
 				#this is the method from MCReg v5
 				#Compute o2 which is o0 - delta/2
 				paste ../temp/0_o_values.txt ./DELTA_${i}.txt | awk '{ if (($1-($2/2)) < 0) { print 0 } else {print ($1-($2/2))} }' > ./0_o_values2.txt
-				${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.gtf $PWD/${d_values_file} $PWD/0_o_values2.txt $total_obs_reads2  $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
+				${SCRIPT_DIR}/scripts/MCReg.sh $PWD/../${cID}.fa $PWD/${d_values_file} $PWD/0_o_values2.txt $total_obs_reads2  $PWD/mcreg.iso.estimates ${CC_Path}/obsRCsize.txt
 			fi
 
 			#copy the estimates file one level up
@@ -766,7 +637,7 @@ fi
 			##Extract true transcript frequency for current component
 			#for each transcript extract true freq from ref
 			
-			ref=${GTF_File%.*}
+			ref=${FA_File%.*}
 			#echo "ref=$ref"
 			
 			#Execute this only if true transcript frequencies ${ref}.tr.freq.norm exists
@@ -808,10 +679,10 @@ fi
 		#~~~New code Dec.18,2013~~~~~~
 		#array with transcripts lengths
 		tr_lengths_array=(`cat ./tr_length.txt | awk '{print $2}' `)
-			echo "tr_lengths_array=${tr_lengths_array[@]}"
+			#echo "tr_lengths_array=${tr_lengths_array[@]}"
 		#tr_estim=`cat ${cID}.mcreg.iso.estimates`
 		tr_estim=(`awk '{print $2}' mcreg.iso.estimates`)
-			echo "tr_estim=${tr_estim[@]}"
+			#echo "tr_estim=${tr_estim[@]}"
 	
 	
 		##Extract f from solver estimates and multiply with the corresponding transcript length

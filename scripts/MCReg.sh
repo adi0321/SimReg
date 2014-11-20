@@ -40,15 +40,14 @@ echo "4. total_no_reads= $total_no_reads"
 echo "5. out_file = $out_file"
 
 
-
-
-rm -rf ./tr_length.txt
 rm -rf ./temp/
 
 mkdir temp
 
 #Compute transcripts lengths:
-awk '($3=="exon") || ($2=="exon")  {ID=$12;L[ID]+=$5-$4+1} END{for(i in L){print i, L[i]}}' $gtf | sort | awk '{print $1, $2}' > tr_length.txt
+#This step was done in compute_obsRC_CC.cpp
+#rm -rf ./tr_length.txt
+#awk '($3=="exon") || ($2=="exon")  {ID=$12;L[ID]+=$5-$4+1} END{for(i in L){print i, L[i]}}' $gtf | sort | awk '{print $1, $2}' > tr_length.txt
 
 
 
