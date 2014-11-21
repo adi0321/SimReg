@@ -1,4 +1,4 @@
-After you installed all 3 dependecies libraries, you may try the following testcase to test SimReg:
+After you installed all 3 dependecies, then you may try the following test cases to test SimReg:
 (The C++ source files have been compiled on Ubuntu server so the program may work as is)
 
 1. First change directory to 1gene_21tr (this small test case consists of a single gene with 21 transcripts)

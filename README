@@ -17,6 +17,7 @@ It depends on:
 
 
 To run SimReg simply use the following command: $PWD/run-mcreg.sh
-(always use full path to run-mcreg.sh)
+(always use absolute path for run-mcreg.sh)
 
 First you will need to compile all source files using the make command.
+(The C++ source files have been compiled on Ubuntu server so the program may work as is)
