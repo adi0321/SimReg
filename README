@@ -21,3 +21,7 @@ To run SimReg simply use the following command: $PWD/run-mcreg.sh
 
 First you will need to compile all source files using the make command.
 (The C++ source files have been compiled on Ubuntu server so the program may work as is)
+
+Usually the transcriptome alignment is done with the following command:
+bowtie --best -v 3 -k 60 -p 12 --chunkmbs 128 [PathToBowtieIndexes] -f -1 [pair1.fa] -2 [pair2.fa] -I [intValue] -X [intValue] -S $PWD/bowtie_k60v0best.sam > bowtie.log
+(see Bowtie manual for more info about the flags: http://bowtie-bio.sourceforge.net/manual.shtml )
