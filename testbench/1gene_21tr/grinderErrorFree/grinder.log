@@ -1,0 +1,7 @@
+Overall diversity = 21 genomes
+DNA shotgun library 1:
+   Community structure  = ./grinder-ranks.txt
+   FASTA file           = ./grinder-reads.fa
+   Library coverage     = 100.000 x
+   Number of reads      = 33354
+   Diversity (richness) = 21

@@ -3,13 +3,10 @@
 #****************************************************************************
 #*	Credits:	Adrian Caciula - Georgia State University, Atlanta, GA		*
 #*												*****************************
+#*	Please report any bugs/suggestions/thanks to adrian.caciula@gmail.com	*
 #*	Date Created: 11/10/2013					*
-#*	Last Update: 06/12/2014						*
+#*	Last Update: 11/21/2014						*
 #************************************************
-
-#This is an extension of best MCReg version 21
-
-##ToDO: Add option for D values (give the file if you have it and do not compute it anymore)
 
 readonly DEBUG=0
 readonly SCRIPT_DIR=$(dirname $0)
@@ -47,8 +44,7 @@ if (($# == 0)); then
         usage
 fi
 
-#TO DO: What about if the sequence of candidate transcripts. This must be extracted from the gtf (See cufflinks it has a script that do such extractions)
-#Maybe use that script if -F option is not provided???
+#TO DO: What about if the sequence of candidate transcripts is not given? Then it must be extracted from the gtf (See cufflinks it has a script that do such extractions)
 ##(in other words we will try to move -F option as optional arguments)
 
    
@@ -345,7 +341,7 @@ echo "Path to Connected Components: $CC_Path"
 			echo "precision = $precision"
 		fi
 		
-	#${SCRIPT_DIR}/scripts/simReg.sh -m $mean -d $deviation -l $read_length -r $rpf -G $GTF_File -F $FA_File -s $SCRIPT_DIR -C $CC_Path
+	#Run SimReg:
 	${SCRIPT_DIR}/simreg -G $GTF_File -F $FA_File -m $mean -d $deviation -l $read_length -t $precision -s $SCRIPT_DIR -C $CC_Path
 
 #done
