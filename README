@@ -2,6 +2,19 @@ SimReg
 ---------------------
 A Simulated Regression based algorithm for transcriptome quantification. 
 
-To compile SimReg, simply run
+
+REQUIREMENTS
+---------------------------
+SimReg is a standalone tool that requires gcc 4.0 or greater, and runs on
+Linux and OS X.  It depends on:
+
+1. Boost (http://www.boost.org) version 1.38 or higher, 
+
+2. CVXOPT: A Python Package for Convex Optimization: http://openopt.org/CVXOPT
+
+3. TCLAP library: http://sourceforge.net/projects/tclap/
+
+
+To compile SimReg, run:
    
     make
