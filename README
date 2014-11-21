@@ -15,6 +15,6 @@ Linux and OS X.  It depends on:
 3. TCLAP library: http://sourceforge.net/projects/tclap/
 
 
-To compile SimReg, run:
-   
-    make
+To run SimReg simply use the following command: run-mcreg.sh
+
+First you will need to compile all source files using the make command.
