@@ -5,8 +5,9 @@ A Simulated Regression based algorithm for transcriptome quantification.
 
 REQUIREMENTS
 ---------------------------
-SimReg is a standalone tool that requires gcc 4.0 or greater, and runs on
-Linux and OS X.  It depends on:
+SimReg is a standalone tool that requires gcc 4.0 or greater, and runs on Linux.  
+
+It depends on:
 
 1. Boost (http://www.boost.org) version 1.38 or higher, 
 
@@ -15,6 +16,7 @@ Linux and OS X.  It depends on:
 3. TCLAP library: http://sourceforge.net/projects/tclap/
 
 
-To run SimReg simply use the following command: run-mcreg.sh
+To run SimReg simply use the following command: $PWD/run-mcreg.sh
+(always use full path to run-mcreg.sh)
 
 First you will need to compile all source files using the make command.
